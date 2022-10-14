@@ -38,6 +38,8 @@ public class DataGroupToUserImp implements DataGroupToUser {
 		setUserId();
 		setActiveStatus();
 		setAppTokenLinkIds();
+		setNames();
+		setRoleIds();
 		return user;
 	}
 
@@ -66,21 +68,31 @@ public class DataGroupToUserImp implements DataGroupToUser {
 		return ((DataRecordLink) appTokenGroup.getFirstChildWithNameInData("appTokenLink"))
 				.getLinkedRecordId();
 	}
-	/////
-	// private List<String> getAppTokensForUser(DataGroup user) {
-	// if (userExistsAndIsActive(user)) {
-	// return getAppTokensForActiveUser(user);
-	// }
-	// return new ArrayList<>();
-	// }
 
-	// private boolean userExistsAndIsActive(DataGroup user) {
-	// return user != null && userIsActive(user);
-	// }
+	private void setNames() {
+		if (userGroup.containsChildWithNameInData("userFirstname")) {
+			user.firstName = userGroup.getFirstAtomicValueWithNameInData("userFirstname");
+		}
+		if (userGroup.containsChildWithNameInData("userLastname")) {
+			user.lastName = userGroup.getFirstAtomicValueWithNameInData("userLastname");
+		}
+	}
 
-	// private String getTokenFromStorage(String appTokenId) {
-	// return recordStorage.read(List.of("appToken"), appTokenId)
-	// .getFirstAtomicValueWithNameInData("token");
-	// }
+	private void setRoleIds() {
+		List<DataGroup> roleGroups = userGroup.getAllGroupsWithNameInData("userRole");
+		getRolesForRolesGroups(roleGroups);
+	}
+
+	private void getRolesForRolesGroups(List<DataGroup> roleGroups) {
+		Set<String> userRoles = user.roles;
+		for (DataGroup roleGroup : roleGroups) {
+			userRoles.add(extractRoleId(roleGroup));
+		}
+	}
+
+	private String extractRoleId(DataGroup roleGroup) {
+		return ((DataRecordLink) roleGroup.getFirstChildWithNameInData("userRole"))
+				.getLinkedRecordId();
+	}
 
 }

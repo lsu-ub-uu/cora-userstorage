@@ -2,6 +2,7 @@ package se.uu.ub.cora.userstorage.convert;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import java.util.Collections;
@@ -45,6 +46,11 @@ public class DataGroupToUserTest {
 		DataGroup userGroup = DataProvider.createGroupFromRecordGroup(recordDataGroup);
 		userGroup.addChild(
 				DataProvider.createAtomicUsingNameInDataAndValue("activeStatus", "inactive"));
+		userGroup.addChild(
+				DataProvider.createAtomicUsingNameInDataAndValue("userFirstname", "someFirstName"));
+		userGroup.addChild(
+				DataProvider.createAtomicUsingNameInDataAndValue("userLastname", "someLastName"));
+
 		return userGroup;
 	}
 
@@ -56,6 +62,9 @@ public class DataGroupToUserTest {
 		User user = dataGroupToUser.groupToUser(userDataGroup);
 
 		assertEquals(user.appTokenIds.size(), 2);
+		assertTrue(user.appTokenIds.contains("someAppTokenId1"));
+		assertTrue(user.appTokenIds.contains("someAppTokenId2"));
+
 	}
 
 	private DataGroup createAppTokenGroupWithLinkId(String appTokenId) {
@@ -78,5 +87,46 @@ public class DataGroupToUserTest {
 		User user = dataGroupToUser.groupToUser(userDataGroup);
 
 		assertTrue(user.active);
+	}
+
+	@Test
+	public void testName() throws Exception {
+		User user = dataGroupToUser.groupToUser(userDataGroup);
+
+		assertEquals(user.firstName, "someFirstName");
+		assertEquals(user.lastName, "someLastName");
+	}
+
+	@Test
+	public void testNameNotInData() throws Exception {
+		userDataGroup.removeFirstChildWithNameInData("userFirstname");
+		userDataGroup.removeFirstChildWithNameInData("userLastname");
+		User user = dataGroupToUser.groupToUser(userDataGroup);
+
+		assertNull(user.firstName);
+		assertNull(user.lastName);
+	}
+
+	@Test
+	public void testRoleIds() throws Exception {
+		userDataGroup.addChild(createUserRoleGroup("someRoleId1"));
+		userDataGroup.addChild(createUserRoleGroup("someRoleId2"));
+
+		User user = dataGroupToUser.groupToUser(userDataGroup);
+
+		assertEquals(user.roles.size(), 2);
+		assertTrue(user.roles.contains("someRoleId1"));
+		assertTrue(user.roles.contains("someRoleId2"));
+	}
+
+	private DataGroup createUserRoleGroup(String roleId) {
+		DataGroup appTokenGroup = DataProvider.createGroupUsingNameInData("userRole");
+		appTokenGroup.addChild(createLinkToRole(roleId));
+		return appTokenGroup;
+	}
+
+	private DataRecordLink createLinkToRole(String roleId) {
+		return DataProvider.createRecordLinkUsingNameInDataAndTypeAndId("userRole", "appToken",
+				roleId);
 	}
 }
