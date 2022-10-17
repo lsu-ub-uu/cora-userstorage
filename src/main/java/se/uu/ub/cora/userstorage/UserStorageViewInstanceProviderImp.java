@@ -18,18 +18,25 @@
  */
 package se.uu.ub.cora.userstorage;
 
-import se.uu.ub.cora.gatekeeper.user.UserStorageView;
-import se.uu.ub.cora.gatekeeper.user.UserStorageViewInstanceProvider;
+import se.uu.ub.cora.gatekeeper.storage.UserStorageView;
+import se.uu.ub.cora.gatekeeper.storage.UserStorageViewInstanceProvider;
 import se.uu.ub.cora.spider.recordtype.internal.RecordTypeHandlerFactoryImp;
+import se.uu.ub.cora.storage.RecordStorage;
 import se.uu.ub.cora.storage.RecordStorageProvider;
+import se.uu.ub.cora.userstorage.convert.DataGroupToUser;
+import se.uu.ub.cora.userstorage.convert.DataGroupToUserImp;
 
 public class UserStorageViewInstanceProviderImp implements UserStorageViewInstanceProvider {
 
 	@Override
 	public UserStorageView getStorageView() {
-		return UserStorageViewImp.usingRecordStorageAndRecordTypeHandlerFactory(
-				RecordStorageProvider.getRecordStorage(),
-				new RecordTypeHandlerFactoryImp(RecordStorageProvider.getRecordStorage()), null);
+		DataGroupToUser dataGroupToUser = new DataGroupToUserImp();
+		RecordStorage recordStorage = RecordStorageProvider.getRecordStorage();
+		RecordStorage recordStorage2 = RecordStorageProvider.getRecordStorage();
+		RecordTypeHandlerFactoryImp recordTypeHandlerFactory = new RecordTypeHandlerFactoryImp(
+				recordStorage2);
+		return UserStorageViewImp.usingRecordStorageAndRecordTypeHandlerFactory(recordStorage,
+				recordTypeHandlerFactory, dataGroupToUser);
 	}
 
 	@Override

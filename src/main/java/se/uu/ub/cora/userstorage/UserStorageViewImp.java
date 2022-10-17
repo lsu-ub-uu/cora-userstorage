@@ -24,10 +24,10 @@ import java.util.List;
 
 import se.uu.ub.cora.data.DataGroup;
 import se.uu.ub.cora.data.DataProvider;
+import se.uu.ub.cora.gatekeeper.storage.UserStorageView;
+import se.uu.ub.cora.gatekeeper.storage.UserStorageViewException;
 import se.uu.ub.cora.gatekeeper.user.AppToken;
 import se.uu.ub.cora.gatekeeper.user.User;
-import se.uu.ub.cora.gatekeeper.user.UserStorageView;
-import se.uu.ub.cora.gatekeeper.user.UserStorageViewException;
 import se.uu.ub.cora.spider.recordtype.RecordTypeHandler;
 import se.uu.ub.cora.spider.recordtype.internal.RecordTypeHandlerFactory;
 import se.uu.ub.cora.storage.RecordStorage;
@@ -144,6 +144,10 @@ public class UserStorageViewImp implements UserStorageView {
 
 	public RecordTypeHandlerFactory onlyForTestGetRecordTypeHandlerFactory() {
 		return recordTypeHandlerFactory;
+	}
+
+	public DataGroupToUser onlyForTestGetDataGroupToUser() {
+		return dataGroupToUser;
 	}
 
 }

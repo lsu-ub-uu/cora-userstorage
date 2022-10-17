@@ -1,4 +1,4 @@
-import se.uu.ub.cora.gatekeeper.user.UserStorageViewInstanceProvider;
+import se.uu.ub.cora.gatekeeper.storage.UserStorageViewInstanceProvider;
 import se.uu.ub.cora.userstorage.UserStorageViewInstanceProviderImp;
 
 module se.uu.ub.cora.userstorage {
@@ -6,6 +6,8 @@ module se.uu.ub.cora.userstorage {
 	requires transitive se.uu.ub.cora.storage;
 	requires transitive se.uu.ub.cora.spider;
 	requires transitive se.uu.ub.cora.gatekeeper;
+
+	exports se.uu.ub.cora.userstorage;
 
 	provides UserStorageViewInstanceProvider with UserStorageViewInstanceProviderImp;
 }
