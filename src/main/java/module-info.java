@@ -1,10 +1,13 @@
-module se.uu.ub.cora.metadatastorage {
-	// requires se.uu.ub.cora.logger;
-	// requires transitive se.uu.ub.cora.storage;
-	// requires transitive se.uu.ub.cora.spider;
-	requires transitive se.uu.ub.cora.bookkeeper;
+import se.uu.ub.cora.gatekeeper.storage.UserStorageViewInstanceProvider;
+import se.uu.ub.cora.userstorage.UserStorageViewInstanceProviderImp;
 
-	// exports se.uu.ub.cora.metadatastorage;
+module se.uu.ub.cora.userstorage {
+	requires se.uu.ub.cora.logger;
+	requires transitive se.uu.ub.cora.storage;
+	requires transitive se.uu.ub.cora.spider;
+	requires transitive se.uu.ub.cora.gatekeeper;
 
-	// provides MetadataStorageViewInstanceProvider with MetadataStorageViewInstanceProviderImp;
+	exports se.uu.ub.cora.userstorage;
+
+	provides UserStorageViewInstanceProvider with UserStorageViewInstanceProviderImp;
 }
