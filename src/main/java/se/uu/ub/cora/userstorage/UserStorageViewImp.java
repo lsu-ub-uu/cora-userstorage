@@ -23,14 +23,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import se.uu.ub.cora.data.DataGroup;
-import se.uu.ub.cora.data.DataProvider;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageView;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageViewException;
 import se.uu.ub.cora.gatekeeper.user.AppToken;
 import se.uu.ub.cora.gatekeeper.user.User;
 import se.uu.ub.cora.spider.recordtype.RecordTypeHandler;
 import se.uu.ub.cora.spider.recordtype.internal.RecordTypeHandlerFactory;
+import se.uu.ub.cora.storage.Condition;
+import se.uu.ub.cora.storage.Filter;
+import se.uu.ub.cora.storage.Part;
 import se.uu.ub.cora.storage.RecordStorage;
+import se.uu.ub.cora.storage.RelationalOperator;
 import se.uu.ub.cora.storage.StorageReadResult;
 import se.uu.ub.cora.userstorage.convert.DataGroupToUser;
 
@@ -96,7 +99,7 @@ public class UserStorageViewImp implements UserStorageView {
 
 	private User tryToGetUserByIdFromLogin(String idFromLogin) {
 		var listOfUserTypes = getImplementingTypesForUser();
-		DataGroup filter = createFilter(idFromLogin);
+		Filter filter = createFilter(idFromLogin);
 		StorageReadResult usersList = recordStorage.readList(listOfUserTypes, filter);
 		assertOnlyOneUserFound(usersList, idFromLogin);
 		return dataGroupToUser.groupToUser(usersList.listOfDataGroups.get(0));
@@ -113,12 +116,13 @@ public class UserStorageViewImp implements UserStorageView {
 		return userReadResult.totalNumberOfMatches != 1;
 	}
 
-	private DataGroup createFilter(String idFromLogin) {
-		DataGroup filter = DataProvider.createGroupUsingNameInData("filter");
-		DataGroup partGroup = DataProvider.createGroupUsingNameInData("part");
-		filter.addChild(partGroup);
-		partGroup.addChild(DataProvider.createAtomicUsingNameInDataAndValue("key", "userId"));
-		partGroup.addChild(DataProvider.createAtomicUsingNameInDataAndValue("value", idFromLogin));
+	private Filter createFilter(String idFromLogin) {
+		Filter filter = new Filter();
+		Part part = new Part();
+		filter.include.add(part);
+		Condition userIdCondition = new Condition("userId", RelationalOperator.EQUAL_TO,
+				idFromLogin);
+		part.conditions.add(userIdCondition);
 		return filter;
 	}
 
