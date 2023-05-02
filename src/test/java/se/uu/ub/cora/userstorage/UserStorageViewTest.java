@@ -43,7 +43,6 @@ import se.uu.ub.cora.storage.RelationalOperator;
 import se.uu.ub.cora.storage.StorageReadResult;
 import se.uu.ub.cora.storage.spies.RecordStorageSpy;
 import se.uu.ub.cora.userstorage.spies.DataGroupToUserSpy;
-import se.uu.ub.cora.userstorage.spies.RecordTypeHandlerSpy;
 
 public class UserStorageViewTest {
 	private static final String ID_FROM_LOGIN = "someIdFromLogin";
@@ -51,7 +50,6 @@ public class UserStorageViewTest {
 	private static final String USER_ID = "someUserId";
 	private RecordStorageSpy recordStorage;
 	private UserStorageViewImp userStorageView;
-	private RecordTypeHandlerFactorySpy recordTypeHandlerFactory;
 	private DataGroupToUserSpy dataGroupToUser;
 	private DataFactorySpy dataFactorySpy;
 
@@ -61,10 +59,9 @@ public class UserStorageViewTest {
 		DataProvider.onlyForTestSetDataFactory(dataFactorySpy);
 
 		recordStorage = new RecordStorageSpy();
-		recordTypeHandlerFactory = new RecordTypeHandlerFactorySpy();
 		dataGroupToUser = new DataGroupToUserSpy();
-		userStorageView = UserStorageViewImp.usingRecordStorageAndRecordTypeHandlerFactory(
-				recordStorage, recordTypeHandlerFactory, dataGroupToUser);
+		userStorageView = UserStorageViewImp
+				.usingRecordStorageAndRecordTypeHandlerFactory(recordStorage, dataGroupToUser);
 	}
 
 	@Test
@@ -76,18 +73,8 @@ public class UserStorageViewTest {
 	public void testGetUserById_usingDependencies() throws Exception {
 		userStorageView.getUserById(USER_ID);
 
-		recordStorage.MCR.assertParameterAsEqual("read", 0, "types", List.of("recordType"));
-		recordStorage.MCR.assertParameterAsEqual("read", 0, "id", "user");
-
-		var userData = recordStorage.MCR.getReturnValue("read", 0);
-
-		recordTypeHandlerFactory.MCR.assertParameters("factorUsingDataGroup", 0, userData);
-
-		RecordTypeHandlerSpy userRecordTypeHandler = (RecordTypeHandlerSpy) recordTypeHandlerFactory.MCR
-				.getReturnValue("factorUsingDataGroup", 0);
-		var listOfUserTypes = userRecordTypeHandler.MCR
-				.getReturnValue("getListOfImplementingRecordTypeIds", 0);
-		recordStorage.MCR.assertParameters("read", 1, listOfUserTypes, USER_ID);
+		recordStorage.MCR.assertParameter("read", 0, "id", USER_ID);
+		recordStorage.MCR.assertParameterAsEqual("read", 0, "types", List.of("user"));
 	}
 
 	@Test
@@ -107,7 +94,7 @@ public class UserStorageViewTest {
 	@Test
 	public void testGetUserById_throwsError() throws Exception {
 		RecordNotFoundException error = new RecordNotFoundException("error from spy");
-		recordStorage.MRV.setThrowException("read", error, List.of("recordType"), "user");
+		recordStorage.MRV.setAlwaysThrowException("read", error);
 
 		try {
 			userStorageView.getUserById(USER_ID);
@@ -126,18 +113,7 @@ public class UserStorageViewTest {
 
 		userStorageView.getUserByIdFromLogin(ID_FROM_LOGIN);
 
-		recordStorage.MCR.assertParameterAsEqual("read", 0, "types", List.of("recordType"));
-		recordStorage.MCR.assertParameterAsEqual("read", 0, "id", "user");
-
-		var userData = recordStorage.MCR.getReturnValue("read", 0);
-
-		recordTypeHandlerFactory.MCR.assertParameters("factorUsingDataGroup", 0, userData);
-
-		RecordTypeHandlerSpy userRecordTypeHandler = (RecordTypeHandlerSpy) recordTypeHandlerFactory.MCR
-				.getReturnValue("factorUsingDataGroup", 0);
-		var listOfUserTypes = userRecordTypeHandler.MCR
-				.getReturnValue("getListOfImplementingRecordTypeIds", 0);
-		recordStorage.MCR.assertParameter("readList", 0, "types", listOfUserTypes);
+		recordStorage.MCR.assertParameterAsEqual("readList", 0, "types", List.of("user"));
 		var filter = recordStorage.MCR
 				.getValueForMethodNameAndCallNumberAndParameterName("readList", 0, "filter");
 		assertTrue(filter instanceof Filter);
@@ -229,7 +205,7 @@ public class UserStorageViewTest {
 	@Test
 	public void testGetUserByIdFromLogin_throwsError() throws Exception {
 		RecordNotFoundException error = new RecordNotFoundException("error from spy");
-		recordStorage.MRV.setThrowException("read", error, List.of("recordType"), "user");
+		recordStorage.MRV.setAlwaysThrowException("readList", error);
 
 		try {
 			userStorageView.getUserByIdFromLogin(ID_FROM_LOGIN);

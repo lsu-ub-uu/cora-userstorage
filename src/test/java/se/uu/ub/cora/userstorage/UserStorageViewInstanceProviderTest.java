@@ -24,7 +24,6 @@ import static org.testng.Assert.assertTrue;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import se.uu.ub.cora.bookkeeper.recordtype.RecordTypeHandlerFactoryImp;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageViewInstanceProvider;
 import se.uu.ub.cora.logger.LoggerProvider;
 import se.uu.ub.cora.logger.spies.LoggerFactorySpy;
@@ -55,16 +54,6 @@ public class UserStorageViewInstanceProviderTest {
 		assertTrue(appTokenStorageView instanceof UserStorageViewImp);
 		recordStorageInstanceProvider.MCR.assertReturn("getRecordStorage", 0,
 				appTokenStorageView.onlyForTestGetRecordStorage());
-	}
-
-	@Test
-	public void testCreatedRecordTypeHandlerFactory() throws Exception {
-		UserStorageViewImp appTokenStorageView = (UserStorageViewImp) instanceProvider
-				.getStorageView();
-
-		RecordTypeHandlerFactoryImp recordTypeHandlerFactory = (RecordTypeHandlerFactoryImp) appTokenStorageView
-				.onlyForTestGetRecordTypeHandlerFactory();
-		assertTrue(recordTypeHandlerFactory instanceof RecordTypeHandlerFactoryImp);
 	}
 
 	@Test
