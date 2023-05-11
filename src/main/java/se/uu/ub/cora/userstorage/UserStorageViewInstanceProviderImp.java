@@ -18,7 +18,6 @@
  */
 package se.uu.ub.cora.userstorage;
 
-import se.uu.ub.cora.bookkeeper.recordtype.RecordTypeHandlerFactoryImp;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageView;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageViewInstanceProvider;
 import se.uu.ub.cora.storage.RecordStorage;
@@ -32,9 +31,8 @@ public class UserStorageViewInstanceProviderImp implements UserStorageViewInstan
 	public UserStorageView getStorageView() {
 		DataGroupToUser dataGroupToUser = new DataGroupToUserImp();
 		RecordStorage recordStorage = RecordStorageProvider.getRecordStorage();
-		RecordTypeHandlerFactoryImp recordTypeHandlerFactory = new RecordTypeHandlerFactoryImp();
 		return UserStorageViewImp.usingRecordStorageAndRecordTypeHandlerFactory(recordStorage,
-				recordTypeHandlerFactory, dataGroupToUser);
+				dataGroupToUser);
 	}
 
 	@Override
