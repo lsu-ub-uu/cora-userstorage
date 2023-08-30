@@ -93,7 +93,7 @@ public class UserStorageViewTest {
 
 	@Test
 	public void testGetUserById_throwsError() throws Exception {
-		RecordNotFoundException error = new RecordNotFoundException("error from spy");
+		RecordNotFoundException error = RecordNotFoundException.withMessage("error from spy");
 		recordStorage.MRV.setAlwaysThrowException("read", error);
 
 		try {
@@ -204,7 +204,7 @@ public class UserStorageViewTest {
 
 	@Test
 	public void testGetUserByIdFromLogin_throwsError() throws Exception {
-		RecordNotFoundException error = new RecordNotFoundException("error from spy");
+		RecordNotFoundException error = RecordNotFoundException.withMessage("error from spy");
 		recordStorage.MRV.setAlwaysThrowException("readList", error);
 
 		try {
@@ -235,7 +235,7 @@ public class UserStorageViewTest {
 
 	@Test
 	public void testGetAppTokenById_throwsError() throws Exception {
-		RecordNotFoundException error = new RecordNotFoundException("error from spy");
+		RecordNotFoundException error = RecordNotFoundException.withMessage("error from spy");
 		recordStorage.MRV.setThrowException("read", error, List.of("appToken"), APP_TOKEN_ID);
 
 		try {
