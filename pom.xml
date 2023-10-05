@@ -35,8 +35,8 @@
 		<logger.version>2.10.0</logger.version>
 		<logger-spies.version>1.5.0</logger-spies.version>
 		<gatekeeper.version>4.5.0</gatekeeper.version>
-		<storage.version>9.0-SNAPSHOT</storage.version>
-		<storagespies.version>1.5.0</storagespies.version>
+		<storage.version>9.0.0</storage.version>
+		<storagespies.version>1.6.0</storagespies.version>
 		<coradata.version>8.0.0</coradata.version>
 		<basicdata.version>5.6.0</basicdata.version>
 		<beefeater.version>3.12.0</beefeater.version>
