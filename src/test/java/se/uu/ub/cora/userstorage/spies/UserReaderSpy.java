@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Uppsala University Library
+ * Copyright 2022, 2024 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -18,27 +18,24 @@
  */
 package se.uu.ub.cora.userstorage.spies;
 
-import java.util.function.Supplier;
-
-import se.uu.ub.cora.data.DataGroup;
 import se.uu.ub.cora.gatekeeper.user.User;
 import se.uu.ub.cora.testutils.mcr.MethodCallRecorder;
 import se.uu.ub.cora.testutils.mrv.MethodReturnValues;
-import se.uu.ub.cora.userstorage.convert.DataGroupToUser;
+import se.uu.ub.cora.userstorage.convert.UserReader;
 
-public class DataGroupToUserSpy implements DataGroupToUser {
+public class UserReaderSpy implements UserReader {
 	public MethodCallRecorder MCR = new MethodCallRecorder();
 	public MethodReturnValues MRV = new MethodReturnValues();
 
-	public DataGroupToUserSpy() {
+	public UserReaderSpy() {
 		MCR.useMRV(MRV);
 		User user = new User("someUser");
-		MRV.setDefaultReturnValuesSupplier("groupToUser", (Supplier<User>) () -> user);
+		MRV.setDefaultReturnValuesSupplier("readUser", () -> user);
 	}
 
 	@Override
-	public User groupToUser(DataGroup dataGroup) {
-		return (User) MCR.addCallAndReturnFromMRV();
+	public User readUser(String userId) {
+		return (User) MCR.addCallAndReturnFromMRV("userId", userId);
 	}
 
 }

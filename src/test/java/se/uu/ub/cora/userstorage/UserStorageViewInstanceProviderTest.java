@@ -29,8 +29,7 @@ import se.uu.ub.cora.logger.LoggerProvider;
 import se.uu.ub.cora.logger.spies.LoggerFactorySpy;
 import se.uu.ub.cora.storage.RecordStorageProvider;
 import se.uu.ub.cora.storage.spies.RecordStorageInstanceProviderSpy;
-import se.uu.ub.cora.userstorage.convert.DataGroupToUser;
-import se.uu.ub.cora.userstorage.convert.DataGroupToUserImp;
+import se.uu.ub.cora.userstorage.convert.UserReaderImp;
 
 public class UserStorageViewInstanceProviderTest {
 	LoggerFactorySpy loggerFactorySpy = new LoggerFactorySpy();
@@ -60,8 +59,10 @@ public class UserStorageViewInstanceProviderTest {
 	public void testCreatedDataGroupToUser() throws Exception {
 		UserStorageViewImp appTokenStorageView = (UserStorageViewImp) instanceProvider
 				.getStorageView();
-		DataGroupToUser dataGroupToUser = appTokenStorageView.onlyForTestGetDataGroupToUser();
-		assertTrue(dataGroupToUser instanceof DataGroupToUserImp);
+		UserReaderImp userReader = (UserReaderImp) appTokenStorageView.onlyForTestGetUserReader();
+		assertTrue(userReader instanceof UserReaderImp);
+		assertEquals(userReader.onlyForTestGetRecordStorage(),
+				appTokenStorageView.onlyForTestGetRecordStorage());
 	}
 
 	@Test

@@ -34,13 +34,15 @@
 	<properties>
 		<logger.version>2.10.0</logger.version>
 		<logger-spies.version>1.5.0</logger-spies.version>
-		<gatekeeper.version>4.6.0</gatekeeper.version>
+		<gatekeeper.version>4.7-SNAPSHOT</gatekeeper.version>
 		<storage.version>9.1.0</storage.version>
 		<storagespies.version>1.7.0</storagespies.version>
 		<coradata.version>9.0.0</coradata.version>
+		<coradata-spies.version>1.7.0</coradata-spies.version>
+		<coradata.version>9.0.0</coradata.version>
 		<basicdata.version>5.7.0</basicdata.version>
 		<beefeater.version>3.13.0</beefeater.version>
-<!--		<bookkeeper.version>9.1-SNAPSHOT</bookkeeper.version>-->
+		<password.version>1.8.0</password.version>
 		<search.version>5.7.0</search.version>
 		<json.version>3.10.0</json.version>
 		<initialize.version>1.6.0</initialize.version>
@@ -79,12 +81,12 @@
 			<version>${beefeater.version}</version>
 			<scope>provided</scope>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>se.uu.ub.cora</groupId>-->
-<!--			<artifactId>bookkeeper</artifactId>-->
-<!--			<version>${bookkeeper.version}</version>-->
-<!--			<scope>provided</scope>-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>se.uu.ub.cora</groupId>
+			<artifactId>password</artifactId>
+			<version>${password.version}</version>
+			<scope>provided</scope>
+		</dependency>
 		<dependency>
 			<groupId>se.uu.ub.cora</groupId>
 			<artifactId>search</artifactId>
@@ -102,6 +104,12 @@
 			<artifactId>coradata</artifactId>
 			<version>${coradata.version}</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>se.uu.ub.cora</groupId>
+			<artifactId>coradata-spies</artifactId>
+			<version>${coradata-spies.version}</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>se.uu.ub.cora</groupId>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Uppsala University Library
+ * Copyright 2022, 2024 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -22,17 +22,17 @@ import se.uu.ub.cora.gatekeeper.storage.UserStorageView;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageViewInstanceProvider;
 import se.uu.ub.cora.storage.RecordStorage;
 import se.uu.ub.cora.storage.RecordStorageProvider;
-import se.uu.ub.cora.userstorage.convert.DataGroupToUser;
-import se.uu.ub.cora.userstorage.convert.DataGroupToUserImp;
+import se.uu.ub.cora.userstorage.convert.UserReader;
+import se.uu.ub.cora.userstorage.convert.UserReaderImp;
 
 public class UserStorageViewInstanceProviderImp implements UserStorageViewInstanceProvider {
 
 	@Override
 	public UserStorageView getStorageView() {
-		DataGroupToUser dataGroupToUser = new DataGroupToUserImp();
 		RecordStorage recordStorage = RecordStorageProvider.getRecordStorage();
+		UserReader userReader = UserReaderImp.usingRecordStorageA(recordStorage);
 		return UserStorageViewImp.usingRecordStorageAndRecordTypeHandlerFactory(recordStorage,
-				dataGroupToUser);
+				userReader);
 	}
 
 	@Override
