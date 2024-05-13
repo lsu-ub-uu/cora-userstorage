@@ -18,17 +18,11 @@
  */
 package se.uu.ub.cora.userstorage.convert;
 
+import se.uu.ub.cora.data.DataGroup;
 import se.uu.ub.cora.gatekeeper.user.User;
 
-public interface UserReader {
+public interface DataGroupToUser {
 
-	/**
-	 * Read a user record and creates a {@link User} object of it.
-	 * 
-	 * @param userId
-	 *            id that identifies a user
-	 * @return
-	 */
-	User readUser(String userId);
+	User groupToUser(DataGroup dataGroup);
 
 }

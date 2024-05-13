@@ -23,8 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import se.uu.ub.cora.data.DataGroup;
-import se.uu.ub.cora.data.DataProvider;
-import se.uu.ub.cora.data.DataRecordGroup;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageView;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageViewException;
 import se.uu.ub.cora.gatekeeper.user.AppToken;
@@ -35,7 +33,7 @@ import se.uu.ub.cora.storage.Part;
 import se.uu.ub.cora.storage.RecordStorage;
 import se.uu.ub.cora.storage.RelationalOperator;
 import se.uu.ub.cora.storage.StorageReadResult;
-import se.uu.ub.cora.userstorage.convert.UserReader;
+import se.uu.ub.cora.userstorage.convert.DataGroupToUser;
 
 public class UserStorageViewImp implements UserStorageView {
 	private static final String USER = "user";
@@ -45,16 +43,16 @@ public class UserStorageViewImp implements UserStorageView {
 
 	private RecordStorage recordStorage;
 	protected List<String> userRecordTypeNames = new ArrayList<>();
-	private UserReader userReader;
+	private DataGroupToUser dataGroupToUser;
 
 	public static UserStorageViewImp usingRecordStorageAndRecordTypeHandlerFactory(
-			RecordStorage recordStorage, UserReader dataGroupToUser) {
+			RecordStorage recordStorage, DataGroupToUser dataGroupToUser) {
 		return new UserStorageViewImp(recordStorage, dataGroupToUser);
 	}
 
-	private UserStorageViewImp(RecordStorage recordStorage, UserReader dataGroupToUser) {
+	private UserStorageViewImp(RecordStorage recordStorage, DataGroupToUser dataGroupToUser) {
 		this.recordStorage = recordStorage;
-		this.userReader = dataGroupToUser;
+		this.dataGroupToUser = dataGroupToUser;
 	}
 
 	@Override
@@ -67,13 +65,10 @@ public class UserStorageViewImp implements UserStorageView {
 		}
 	}
 
-	// SPIKE FIX starts
 	private User tryToGetUserById(String userId) {
-		return userReader.readUser(userId);
-		// var userDataGroup = recordStorage.read(List.of("user"), userId);
-		// return userReader.groupToUser(userDataGroup);
+		var userDataGroup = recordStorage.read(List.of("user"), userId);
+		return dataGroupToUser.groupToUser(userDataGroup);
 	}
-	// SPIKE FIX ends
 
 	@Override
 	public User getUserByIdFromLogin(String idFromLogin) {
@@ -90,24 +85,15 @@ public class UserStorageViewImp implements UserStorageView {
 	private User tryToGetUserByIdFromLogin(String idFromLogin) {
 		Filter filter = createFilter(idFromLogin);
 		StorageReadResult usersList = recordStorage.readList(List.of("user"), filter);
-		// SPIKE FIX starts
-		DataRecordGroup oneUserRecordGroup = ensureOnlyOneUserExists(usersList, idFromLogin);
-		return userReader.readUser(oneUserRecordGroup.getId());
-		// return userReader.groupToUser(usersList.listOfDataGroups.get(0));
-		// SPIKE FIX ends
+		assertOnlyOneUserFound(usersList, idFromLogin);
+		return dataGroupToUser.groupToUser(usersList.listOfDataGroups.get(0));
 	}
 
-	private DataRecordGroup ensureOnlyOneUserExists(StorageReadResult userReadResult,
-			String idFromLogin) {
+	private void assertOnlyOneUserFound(StorageReadResult userReadResult, String idFromLogin) {
 		if (foundNoneOrMultipleUsers(userReadResult)) {
 			String formatErrorMessage = MessageFormat.format(ERROR_MESSAGE_LOGIN_ID, idFromLogin);
 			throw UserStorageViewException.usingMessage(formatErrorMessage);
 		}
-		// SPIKE FIX starts
-		DataRecordGroup recordGroup = DataProvider
-				.createRecordGroupFromDataGroup(userReadResult.listOfDataGroups.get(0));
-		return recordGroup;
-		// SPIKE FIX ends
 	}
 
 	private boolean foundNoneOrMultipleUsers(StorageReadResult userReadResult) {
@@ -144,8 +130,8 @@ public class UserStorageViewImp implements UserStorageView {
 		return recordStorage;
 	}
 
-	public UserReader onlyForTestGetUserReader() {
-		return userReader;
+	public DataGroupToUser onlyForTestGetDataGroupToUser() {
+		return dataGroupToUser;
 	}
 
 }

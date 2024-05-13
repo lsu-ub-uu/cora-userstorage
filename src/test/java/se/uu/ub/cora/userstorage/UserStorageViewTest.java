@@ -42,7 +42,7 @@ import se.uu.ub.cora.storage.RecordNotFoundException;
 import se.uu.ub.cora.storage.RelationalOperator;
 import se.uu.ub.cora.storage.StorageReadResult;
 import se.uu.ub.cora.storage.spies.RecordStorageSpy;
-import se.uu.ub.cora.userstorage.spies.UserReaderSpy;
+import se.uu.ub.cora.userstorage.spies.DataGroupToUserSpy;
 
 public class UserStorageViewTest {
 	private static final String ID_FROM_LOGIN = "someIdFromLogin";
@@ -50,7 +50,7 @@ public class UserStorageViewTest {
 	private static final String USER_ID = "someUserId";
 	private RecordStorageSpy recordStorage;
 	private UserStorageViewImp userStorageView;
-	private UserReaderSpy userReader;
+	private DataGroupToUserSpy dataGroupToUser;
 	private DataFactorySpy dataFactorySpy;
 
 	@BeforeMethod
@@ -59,9 +59,9 @@ public class UserStorageViewTest {
 		DataProvider.onlyForTestSetDataFactory(dataFactorySpy);
 
 		recordStorage = new RecordStorageSpy();
-		userReader = new UserReaderSpy();
+		dataGroupToUser = new DataGroupToUserSpy();
 		userStorageView = UserStorageViewImp
-				.usingRecordStorageAndRecordTypeHandlerFactory(recordStorage, userReader);
+				.usingRecordStorageAndRecordTypeHandlerFactory(recordStorage, dataGroupToUser);
 	}
 
 	@Test
@@ -88,7 +88,7 @@ public class UserStorageViewTest {
 
 		User user = userStorageView.getUserById(USER_ID);
 
-		userReader.MCR.assertReturn("groupToUser", 0, user);
+		dataGroupToUser.MCR.assertReturn("groupToUser", 0, user);
 	}
 
 	@Test
@@ -137,7 +137,7 @@ public class UserStorageViewTest {
 
 		User user = userStorageView.getUserByIdFromLogin(ID_FROM_LOGIN);
 
-		userReader.MCR.assertReturn("groupToUser", 0, user);
+		dataGroupToUser.MCR.assertReturn("groupToUser", 0, user);
 	}
 
 	@Test
