@@ -106,7 +106,7 @@ public class UserReaderTest {
 		assertEquals(user.id, SOME_USER_ID);
 		assertEquals(user.appTokenIds, Collections.emptyList());
 		assertFalse(user.active);
-		assertTrue(user.password.isEmpty());
+		assertTrue(user.passwordId.isEmpty());
 	}
 
 	@Test
@@ -198,7 +198,7 @@ public class UserReaderTest {
 		systemSecrestRecordGroup.MCR.assertParameters("getFirstAtomicValueWithNameInData", 0,
 				"secret");
 
-		assertTrue(user.password.isPresent());
-		assertEquals(user.password.get(), "someTextHashed");
+		assertTrue(user.passwordId.isPresent());
+		assertEquals(user.passwordId.get(), "someTextHashed");
 	}
 }

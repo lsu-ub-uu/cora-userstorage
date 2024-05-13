@@ -58,7 +58,7 @@ public class UserReaderImp implements UserReader {
 	private void setPassword(User user) {
 		if (hasPasswordLink()) {
 			String textHashed = readPassword();
-			user.password = Optional.of(textHashed);
+			user.passwordId = Optional.of(textHashed);
 		}
 	}
 
