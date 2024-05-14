@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Uppsala University Library
+ * Copyright 2022, 2024 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -18,11 +18,18 @@
  */
 package se.uu.ub.cora.userstorage.convert;
 
-import se.uu.ub.cora.data.DataGroup;
+import se.uu.ub.cora.data.DataRecordGroup;
 import se.uu.ub.cora.gatekeeper.user.User;
 
 public interface DataGroupToUser {
 
-	User groupToUser(DataGroup dataGroup);
+	/**
+	 * groupToUser Converts a {@link DataRecordGroup} to {@link User} object.
+	 * 
+	 * @param userDataRecordGroup
+	 *            is the {@link DataRecordGroup} to convert to {@link User}
+	 * @return the represenetnation of userDataRecordGroup as {@link User}
+	 */
+	User groupToUser(DataRecordGroup userDataRecordGroup);
 
 }

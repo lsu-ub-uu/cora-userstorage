@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import se.uu.ub.cora.data.DataGroup;
+import se.uu.ub.cora.data.DataProvider;
+import se.uu.ub.cora.data.DataRecordGroup;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageView;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageViewException;
 import se.uu.ub.cora.gatekeeper.user.AppToken;
@@ -66,7 +68,7 @@ public class UserStorageViewImp implements UserStorageView {
 	}
 
 	private User tryToGetUserById(String userId) {
-		var userDataGroup = recordStorage.read(List.of("user"), userId);
+		var userDataGroup = recordStorage.read("user", userId);
 		return dataGroupToUser.groupToUser(userDataGroup);
 	}
 
@@ -86,7 +88,9 @@ public class UserStorageViewImp implements UserStorageView {
 		Filter filter = createFilter(idFromLogin);
 		StorageReadResult usersList = recordStorage.readList(List.of("user"), filter);
 		assertOnlyOneUserFound(usersList, idFromLogin);
-		return dataGroupToUser.groupToUser(usersList.listOfDataGroups.get(0));
+		DataGroup userDataGroup = usersList.listOfDataGroups.get(0);
+		DataRecordGroup recordGroup = DataProvider.createRecordGroupFromDataGroup(userDataGroup);
+		return dataGroupToUser.groupToUser(recordGroup);
 	}
 
 	private void assertOnlyOneUserFound(StorageReadResult userReadResult, String idFromLogin) {
@@ -121,8 +125,8 @@ public class UserStorageViewImp implements UserStorageView {
 	}
 
 	private AppToken tryToGetAppTokenById(String appTokenId) {
-		DataGroup appTokenGroup = recordStorage.read(List.of(APP_TOKEN), appTokenId);
-		String tokenValue = appTokenGroup.getFirstAtomicValueWithNameInData("token");
+		DataRecordGroup appToken = recordStorage.read(APP_TOKEN, appTokenId);
+		String tokenValue = appToken.getFirstAtomicValueWithNameInData("token");
 		return new AppToken(appTokenId, tokenValue);
 	}
 
@@ -134,4 +138,18 @@ public class UserStorageViewImp implements UserStorageView {
 		return dataGroupToUser;
 	}
 
+	@Override
+	public String getSystemSecretById(String systemSecretId) {
+		try {
+			return tryToReadSystemSecretById(systemSecretId);
+		} catch (Exception e) {
+			throw UserStorageViewException.usingMessageAndException(
+					"Error reading systemSecret with id: " + systemSecretId + " from storage.", e);
+		}
+	}
+
+	private String tryToReadSystemSecretById(String systemSecretId) {
+		DataRecordGroup systemSecret = recordStorage.read("systemSecret", systemSecretId);
+		return systemSecret.getFirstAtomicValueWithNameInData("secret");
+	}
 }

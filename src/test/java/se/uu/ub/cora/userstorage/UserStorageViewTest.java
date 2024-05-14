@@ -21,6 +21,7 @@ package se.uu.ub.cora.userstorage;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,6 +33,7 @@ import org.testng.annotations.Test;
 import se.uu.ub.cora.data.DataProvider;
 import se.uu.ub.cora.data.spies.DataFactorySpy;
 import se.uu.ub.cora.data.spies.DataGroupSpy;
+import se.uu.ub.cora.data.spies.DataRecordGroupSpy;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageViewException;
 import se.uu.ub.cora.gatekeeper.user.AppToken;
 import se.uu.ub.cora.gatekeeper.user.User;
@@ -59,6 +61,7 @@ public class UserStorageViewTest {
 		DataProvider.onlyForTestSetDataFactory(dataFactorySpy);
 
 		recordStorage = new RecordStorageSpy();
+		recordStorage.MRV.setDefaultReturnValuesSupplier("read", () -> new DataRecordGroupSpy());
 		dataGroupToUser = new DataGroupToUserSpy();
 		userStorageView = UserStorageViewImp
 				.usingRecordStorageAndRecordTypeHandlerFactory(recordStorage, dataGroupToUser);
@@ -74,12 +77,12 @@ public class UserStorageViewTest {
 		userStorageView.getUserById(USER_ID);
 
 		recordStorage.MCR.assertParameter("read", 0, "id", USER_ID);
-		recordStorage.MCR.assertParameterAsEqual("read", 0, "types", List.of("user"));
+		recordStorage.MCR.assertParameterAsEqual("read", 0, "type", "user");
 	}
 
 	@Test
 	public void testGetUserById_userContainsInfo() throws Exception {
-		DataGroupSpy userDataGroup = new DataGroupSpy();
+		DataRecordGroupSpy userDataGroup = new DataRecordGroupSpy();
 		userDataGroup.MRV.setReturnValues("getAllGroupsWithNameInData", List.of(),
 				"userAppTokenGroup");
 
@@ -120,7 +123,7 @@ public class UserStorageViewTest {
 
 	}
 
-	private void setupRecordStorageToReturnUserForReadListUsingFilter() {
+	private DataGroupSpy setupRecordStorageToReturnUserForReadListUsingFilter() {
 		DataGroupSpy userDataGroup = new DataGroupSpy();
 		userDataGroup.MRV.setReturnValues("getAllGroupsWithNameInData", List.of(),
 				"userAppTokenGroup");
@@ -129,15 +132,19 @@ public class UserStorageViewTest {
 		readResult.totalNumberOfMatches = 1;
 		recordStorage.MRV.setDefaultReturnValuesSupplier("readList",
 				(Supplier<StorageReadResult>) () -> readResult);
+		return userDataGroup;
 	}
 
 	@Test
 	public void testGetUserByIdFromLogin_userContainsInfo() throws Exception {
-		setupRecordStorageToReturnUserForReadListUsingFilter();
+		DataGroupSpy userDataGroup = setupRecordStorageToReturnUserForReadListUsingFilter();
 
 		User user = userStorageView.getUserByIdFromLogin(ID_FROM_LOGIN);
 
+		dataFactorySpy.MCR.assertParameters("factorRecordGroupFromDataGroup", 0, userDataGroup);
+		Object recordGroup = dataFactorySpy.MCR.getReturnValue("factorRecordGroupFromDataGroup", 0);
 		dataGroupToUser.MCR.assertReturn("groupToUser", 0, user);
+		dataGroupToUser.MCR.assertParameters("groupToUser", 0, recordGroup);
 	}
 
 	@Test
@@ -222,10 +229,11 @@ public class UserStorageViewTest {
 	public void testGetAppTokenById() throws Exception {
 		AppToken appToken = userStorageView.getAppTokenById(APP_TOKEN_ID);
 
-		recordStorage.MCR.assertParameterAsEqual("read", 0, "types", List.of("appToken"));
+		recordStorage.MCR.assertParameterAsEqual("read", 0, "type", "appToken");
 		recordStorage.MCR.assertParameterAsEqual("read", 0, "id", APP_TOKEN_ID);
 
-		DataGroupSpy appTokenData = (DataGroupSpy) recordStorage.MCR.getReturnValue("read", 0);
+		DataRecordGroupSpy appTokenData = (DataRecordGroupSpy) recordStorage.MCR
+				.getReturnValue("read", 0);
 
 		assertEquals(appToken.id, APP_TOKEN_ID);
 
@@ -236,7 +244,7 @@ public class UserStorageViewTest {
 	@Test
 	public void testGetAppTokenById_throwsError() throws Exception {
 		RecordNotFoundException error = RecordNotFoundException.withMessage("error from spy");
-		recordStorage.MRV.setThrowException("read", error, List.of("appToken"), APP_TOKEN_ID);
+		recordStorage.MRV.setThrowException("read", error, "appToken", APP_TOKEN_ID);
 
 		try {
 			userStorageView.getAppTokenById(APP_TOKEN_ID);
@@ -247,5 +255,42 @@ public class UserStorageViewTest {
 					"Error reading appToken with id: " + APP_TOKEN_ID + " from storage.");
 			assertSame(e.getCause(), error);
 		}
+	}
+
+	@Test
+	public void testGetSystemSecretByIdNotFound() throws Exception {
+		RecordNotFoundException error = RecordNotFoundException.withMessage("error from spy");
+		recordStorage.MRV.setAlwaysThrowException("read", error);
+
+		try {
+			userStorageView.getSystemSecretById("someId");
+			fail();
+		} catch (Exception e) {
+			assertTrue(e instanceof UserStorageViewException);
+			assertEquals(e.getMessage(),
+					"Error reading systemSecret with id: someId from storage.");
+			assertSame(e.getCause(), error);
+		}
+
+	}
+
+	@Test
+	public void testGetSystemSecretById() throws Exception {
+		String secretInfo = "someSecretInfo";
+		String someSystemSecretId = "someSystemSecretId";
+		setUpRecordStorageToReturnSystemSecretWithSecretForId(secretInfo, someSystemSecretId);
+
+		String secretText = userStorageView.getSystemSecretById(someSystemSecretId);
+
+		assertEquals(secretText, secretInfo);
+	}
+
+	private void setUpRecordStorageToReturnSystemSecretWithSecretForId(String secretInfo,
+			String someSystemSecretId) {
+		DataRecordGroupSpy systemSecret = new DataRecordGroupSpy();
+		systemSecret.MRV.setSpecificReturnValuesSupplier("getFirstAtomicValueWithNameInData",
+				() -> secretInfo, "secret");
+		recordStorage.MRV.setSpecificReturnValuesSupplier("read", () -> systemSecret,
+				"systemSecret", someSystemSecretId);
 	}
 }

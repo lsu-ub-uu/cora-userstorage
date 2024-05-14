@@ -20,7 +20,7 @@ package se.uu.ub.cora.userstorage.spies;
 
 import java.util.function.Supplier;
 
-import se.uu.ub.cora.data.DataGroup;
+import se.uu.ub.cora.data.DataRecordGroup;
 import se.uu.ub.cora.gatekeeper.user.User;
 import se.uu.ub.cora.testutils.mcr.MethodCallRecorder;
 import se.uu.ub.cora.testutils.mrv.MethodReturnValues;
@@ -37,8 +37,8 @@ public class DataGroupToUserSpy implements DataGroupToUser {
 	}
 
 	@Override
-	public User groupToUser(DataGroup dataGroup) {
-		return (User) MCR.addCallAndReturnFromMRV();
+	public User groupToUser(DataRecordGroup dataRecordGroup) {
+		return (User) MCR.addCallAndReturnFromMRV("dataRecordGroup", dataRecordGroup);
 	}
 
 }
