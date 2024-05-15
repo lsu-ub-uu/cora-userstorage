@@ -39,6 +39,7 @@ import se.uu.ub.cora.gatekeeper.user.User;
 
 public class DataGroupToUserTest {
 
+	private static final String PASSWORD_GROUP_NAME_IN_DATA = "password";
 	private static final String USER_ID = "someId";
 	private DataGroupToUser dataGroupToUser;
 	private DataRecordGroup userDataRecordGroup;
@@ -165,9 +166,9 @@ public class DataGroupToUserTest {
 		User user = dataGroupToUser.groupToUser(userRecordGroup);
 
 		userRecordGroup.MCR.assertParameters("containsChildOfTypeAndName", 0, DataGroup.class,
-				"passwordGroup");
+				PASSWORD_GROUP_NAME_IN_DATA);
 		userRecordGroup.MCR.assertParameters("getFirstChildOfTypeAndName", 0, DataGroup.class,
-				"passwordGroup");
+				PASSWORD_GROUP_NAME_IN_DATA);
 		passwordGroup.MCR.assertParameters("getFirstChildOfTypeAndName", 0, DataRecordLink.class,
 				"passwordLink");
 
@@ -178,9 +179,9 @@ public class DataGroupToUserTest {
 	private DataRecordGroupSpy createAndConfigureUserRecordGroup(DataGroupSpy passwordGroup) {
 		DataRecordGroupSpy userRecordGroup = new DataRecordGroupSpy();
 		userRecordGroup.MRV.setSpecificReturnValuesSupplier("containsChildOfTypeAndName",
-				() -> true, DataGroup.class, "passwordGroup");
+				() -> true, DataGroup.class, PASSWORD_GROUP_NAME_IN_DATA);
 		userRecordGroup.MRV.setSpecificReturnValuesSupplier("getFirstChildOfTypeAndName",
-				() -> passwordGroup, DataGroup.class, "passwordGroup");
+				() -> passwordGroup, DataGroup.class, PASSWORD_GROUP_NAME_IN_DATA);
 		return userRecordGroup;
 	}
 

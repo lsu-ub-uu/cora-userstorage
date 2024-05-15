@@ -29,6 +29,7 @@ import se.uu.ub.cora.gatekeeper.user.User;
 
 public class DataGroupToUserImp implements DataGroupToUser {
 
+	private static final String PASSWORD_GROUP_NAME_IN_DATA = "password";
 	private DataRecordGroup userRecordGroup;
 
 	@Override
@@ -52,12 +53,13 @@ public class DataGroupToUserImp implements DataGroupToUser {
 
 	private DataRecordLink getPasswordLink() {
 		DataGroup passwordGroup = userRecordGroup.getFirstChildOfTypeAndName(DataGroup.class,
-				"passwordGroup");
+				PASSWORD_GROUP_NAME_IN_DATA);
 		return passwordGroup.getFirstChildOfTypeAndName(DataRecordLink.class, "passwordLink");
 	}
 
 	private boolean hasPassword() {
-		return userRecordGroup.containsChildOfTypeAndName(DataGroup.class, "passwordGroup");
+		return userRecordGroup.containsChildOfTypeAndName(DataGroup.class,
+				PASSWORD_GROUP_NAME_IN_DATA);
 	}
 
 	private User setUserId() {
