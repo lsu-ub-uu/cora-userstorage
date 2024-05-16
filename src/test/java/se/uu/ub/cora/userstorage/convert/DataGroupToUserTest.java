@@ -1,3 +1,21 @@
+/*
+ * Copyright 2022, 2024 Uppsala University Library
+ *
+ * This file is part of Cora.
+ *
+ *     Cora is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     Cora is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with Cora.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package se.uu.ub.cora.userstorage.convert;
 
 import static org.testng.Assert.assertEquals;
@@ -14,52 +32,53 @@ import se.uu.ub.cora.data.DataGroup;
 import se.uu.ub.cora.data.DataProvider;
 import se.uu.ub.cora.data.DataRecordGroup;
 import se.uu.ub.cora.data.DataRecordLink;
+import se.uu.ub.cora.data.spies.DataGroupSpy;
+import se.uu.ub.cora.data.spies.DataRecordGroupSpy;
+import se.uu.ub.cora.data.spies.DataRecordLinkSpy;
 import se.uu.ub.cora.gatekeeper.user.User;
 
 public class DataGroupToUserTest {
 
+	private static final String PASSWORD_GROUP_NAME_IN_DATA = "password";
 	private static final String USER_ID = "someId";
 	private DataGroupToUser dataGroupToUser;
-	private DataGroup userDataGroup;
+	private DataRecordGroup userDataRecordGroup;
 
 	@BeforeMethod
 	public void beforeMethod() {
 		DataProvider.onlyForTestSetDataFactory(null);
 		dataGroupToUser = new DataGroupToUserImp();
-		userDataGroup = createUserDataGroup();
+		userDataRecordGroup = createUserDataGroup();
 	}
 
 	@Test
 	public void testId() throws Exception {
-		User user = dataGroupToUser.groupToUser(userDataGroup);
+		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
 		assertEquals(user.id, USER_ID);
 		assertEquals(user.appTokenIds, Collections.emptyList());
 		assertFalse(user.active);
 	}
 
-	private DataGroup createUserDataGroup() {
-		DataGroup userDataGroup = DataProvider.createGroupUsingNameInData("user");
-		DataRecordGroup recordDataGroup = DataProvider
-				.createRecordGroupFromDataGroup(userDataGroup);
+	private DataRecordGroup createUserDataGroup() {
+		DataRecordGroup recordDataGroup = DataProvider.createRecordGroupUsingNameInData("user");
 		recordDataGroup.setId(USER_ID);
-		DataGroup userGroup = DataProvider.createGroupFromRecordGroup(recordDataGroup);
-		userGroup.addChild(
+		recordDataGroup.addChild(
 				DataProvider.createAtomicUsingNameInDataAndValue("activeStatus", "inactive"));
-		userGroup.addChild(
+		recordDataGroup.addChild(
 				DataProvider.createAtomicUsingNameInDataAndValue("userFirstname", "someFirstName"));
-		userGroup.addChild(
+		recordDataGroup.addChild(
 				DataProvider.createAtomicUsingNameInDataAndValue("userLastname", "someLastName"));
 
-		return userGroup;
+		return recordDataGroup;
 	}
 
 	@Test
 	public void testAppTokenIds() throws Exception {
-		userDataGroup.addChild(createAppTokenGroupWithLinkId("someAppTokenId1"));
-		userDataGroup.addChild(createAppTokenGroupWithLinkId("someAppTokenId2"));
+		userDataRecordGroup.addChild(createAppTokenGroupWithLinkId("someAppTokenId1"));
+		userDataRecordGroup.addChild(createAppTokenGroupWithLinkId("someAppTokenId2"));
 
-		User user = dataGroupToUser.groupToUser(userDataGroup);
+		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
 		assertEquals(user.appTokenIds.size(), 2);
 		assertTrue(user.appTokenIds.contains("someAppTokenId1"));
@@ -80,18 +99,18 @@ public class DataGroupToUserTest {
 
 	@Test
 	public void testActive() throws Exception {
-		userDataGroup.removeFirstChildWithNameInData("activeStatus");
-		userDataGroup.addChild(
+		userDataRecordGroup.removeFirstChildWithNameInData("activeStatus");
+		userDataRecordGroup.addChild(
 				DataProvider.createAtomicUsingNameInDataAndValue("activeStatus", "active"));
 
-		User user = dataGroupToUser.groupToUser(userDataGroup);
+		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
 		assertTrue(user.active);
 	}
 
 	@Test
 	public void testName() throws Exception {
-		User user = dataGroupToUser.groupToUser(userDataGroup);
+		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
 		assertEquals(user.firstName, "someFirstName");
 		assertEquals(user.lastName, "someLastName");
@@ -99,9 +118,9 @@ public class DataGroupToUserTest {
 
 	@Test
 	public void testNameNotInData() throws Exception {
-		userDataGroup.removeFirstChildWithNameInData("userFirstname");
-		userDataGroup.removeFirstChildWithNameInData("userLastname");
-		User user = dataGroupToUser.groupToUser(userDataGroup);
+		userDataRecordGroup.removeFirstChildWithNameInData("userFirstname");
+		userDataRecordGroup.removeFirstChildWithNameInData("userLastname");
+		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
 		assertNull(user.firstName);
 		assertNull(user.lastName);
@@ -109,10 +128,10 @@ public class DataGroupToUserTest {
 
 	@Test
 	public void testRoleIds() throws Exception {
-		userDataGroup.addChild(createUserRoleGroup("someRoleId1"));
-		userDataGroup.addChild(createUserRoleGroup("someRoleId2"));
+		userDataRecordGroup.addChild(createUserRoleGroup("someRoleId1"));
+		userDataRecordGroup.addChild(createUserRoleGroup("someRoleId2"));
 
-		User user = dataGroupToUser.groupToUser(userDataGroup);
+		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
 		assertEquals(user.roles.size(), 2);
 		assertTrue(user.roles.contains("someRoleId1"));
@@ -128,5 +147,55 @@ public class DataGroupToUserTest {
 	private DataRecordLink createLinkToRole(String roleId) {
 		return DataProvider.createRecordLinkUsingNameInDataAndTypeAndId("userRole", "appToken",
 				roleId);
+	}
+
+	@Test
+	public void testPasswordLinkDoesNotExist() throws Exception {
+		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
+
+		assertTrue(user.passwordId.isEmpty());
+	}
+
+	@Test
+	public void testPasswordLinkExists() throws Exception {
+
+		DataRecordLinkSpy passwordLink = createAndConfigurePasswordLink();
+		DataGroupSpy passwordGroup = createAndConfigurePasswordGroup(passwordLink);
+		DataRecordGroupSpy userRecordGroup = createAndConfigureUserRecordGroup(passwordGroup);
+
+		User user = dataGroupToUser.groupToUser(userRecordGroup);
+
+		userRecordGroup.MCR.assertParameters("containsChildOfTypeAndName", 0, DataGroup.class,
+				PASSWORD_GROUP_NAME_IN_DATA);
+		userRecordGroup.MCR.assertParameters("getFirstChildOfTypeAndName", 0, DataGroup.class,
+				PASSWORD_GROUP_NAME_IN_DATA);
+		passwordGroup.MCR.assertParameters("getFirstChildOfTypeAndName", 0, DataRecordLink.class,
+				"passwordLink");
+
+		assertTrue(user.passwordId.isPresent());
+		passwordLink.MCR.assertReturn("getLinkedRecordId", 0, user.passwordId.get());
+	}
+
+	private DataRecordGroupSpy createAndConfigureUserRecordGroup(DataGroupSpy passwordGroup) {
+		DataRecordGroupSpy userRecordGroup = new DataRecordGroupSpy();
+		userRecordGroup.MRV.setSpecificReturnValuesSupplier("containsChildOfTypeAndName",
+				() -> true, DataGroup.class, PASSWORD_GROUP_NAME_IN_DATA);
+		userRecordGroup.MRV.setSpecificReturnValuesSupplier("getFirstChildOfTypeAndName",
+				() -> passwordGroup, DataGroup.class, PASSWORD_GROUP_NAME_IN_DATA);
+		return userRecordGroup;
+	}
+
+	private DataGroupSpy createAndConfigurePasswordGroup(DataRecordLinkSpy passwordLink) {
+		DataGroupSpy passwordGroup = new DataGroupSpy();
+		passwordGroup.MRV.setSpecificReturnValuesSupplier("getFirstChildOfTypeAndName",
+				() -> passwordLink, DataRecordLink.class, "passwordLink");
+		return passwordGroup;
+	}
+
+	private DataRecordLinkSpy createAndConfigurePasswordLink() {
+		DataRecordLinkSpy passwordLink = new DataRecordLinkSpy();
+		passwordLink.MRV.setDefaultReturnValuesSupplier("getLinkedRecordId",
+				() -> "someSystemSecretId");
+		return passwordLink;
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Uppsala University Library
+ * Copyright 2022, 2024 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -19,45 +19,65 @@
 package se.uu.ub.cora.userstorage.convert;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import se.uu.ub.cora.data.DataGroup;
-import se.uu.ub.cora.data.DataProvider;
 import se.uu.ub.cora.data.DataRecordGroup;
 import se.uu.ub.cora.data.DataRecordLink;
 import se.uu.ub.cora.gatekeeper.user.User;
 
 public class DataGroupToUserImp implements DataGroupToUser {
 
-	private DataGroup userGroup;
-	private User user;
+	private static final String PASSWORD_GROUP_NAME_IN_DATA = "password";
+	private DataRecordGroup userRecordGroup;
 
 	@Override
-	public User groupToUser(DataGroup dataGroup) {
-		this.userGroup = dataGroup;
-		setUserId();
-		setActiveStatus();
-		setAppTokenLinkIds();
-		setNames();
-		setRoleIds();
+	public User groupToUser(DataRecordGroup dataGroup) {
+		this.userRecordGroup = dataGroup;
+		User user = setUserId();
+		setActiveStatus(user);
+		setAppTokenLinkIds(user);
+		setNames(user);
+		setRoleIds(user);
+		setPassword(user);
 		return user;
 	}
 
-	private void setUserId() {
-		DataRecordGroup userRecordGroup = DataProvider.createRecordGroupFromDataGroup(userGroup);
-		user = new User(userRecordGroup.getId());
+	private void setPassword(User user) {
+		if (hasPassword()) {
+			String systemSecretId = getPasswordLink().getLinkedRecordId();
+			user.passwordId = Optional.of(systemSecretId);
+		}
 	}
 
-	private void setActiveStatus() {
-		user.active = "active".equals(userGroup.getFirstAtomicValueWithNameInData("activeStatus"));
+	private DataRecordLink getPasswordLink() {
+		DataGroup passwordGroup = userRecordGroup.getFirstChildOfTypeAndName(DataGroup.class,
+				PASSWORD_GROUP_NAME_IN_DATA);
+		return passwordGroup.getFirstChildOfTypeAndName(DataRecordLink.class, "passwordLink");
 	}
 
-	private void setAppTokenLinkIds() {
-		List<DataGroup> appTokenGroups = userGroup.getAllGroupsWithNameInData("userAppTokenGroup");
-		getAppTokensForAppTokenGroups(appTokenGroups);
+	private boolean hasPassword() {
+		return userRecordGroup.containsChildOfTypeAndName(DataGroup.class,
+				PASSWORD_GROUP_NAME_IN_DATA);
 	}
 
-	private void getAppTokensForAppTokenGroups(List<DataGroup> appTokenGroups) {
+	private User setUserId() {
+		return new User(userRecordGroup.getId());
+	}
+
+	private void setActiveStatus(User user) {
+		user.active = "active"
+				.equals(userRecordGroup.getFirstAtomicValueWithNameInData("activeStatus"));
+	}
+
+	private void setAppTokenLinkIds(User user) {
+		List<DataGroup> appTokenGroups = userRecordGroup
+				.getAllGroupsWithNameInData("userAppTokenGroup");
+		getAppTokensForAppTokenGroups(user, appTokenGroups);
+	}
+
+	private void getAppTokensForAppTokenGroups(User user, List<DataGroup> appTokenGroups) {
 		Set<String> userAppTokens = user.appTokenIds;
 		for (DataGroup appTokenGroup : appTokenGroups) {
 			userAppTokens.add(extractAppTokenId(appTokenGroup));
@@ -69,21 +89,21 @@ public class DataGroupToUserImp implements DataGroupToUser {
 				.getLinkedRecordId();
 	}
 
-	private void setNames() {
-		if (userGroup.containsChildWithNameInData("userFirstname")) {
-			user.firstName = userGroup.getFirstAtomicValueWithNameInData("userFirstname");
+	private void setNames(User user) {
+		if (userRecordGroup.containsChildWithNameInData("userFirstname")) {
+			user.firstName = userRecordGroup.getFirstAtomicValueWithNameInData("userFirstname");
 		}
-		if (userGroup.containsChildWithNameInData("userLastname")) {
-			user.lastName = userGroup.getFirstAtomicValueWithNameInData("userLastname");
+		if (userRecordGroup.containsChildWithNameInData("userLastname")) {
+			user.lastName = userRecordGroup.getFirstAtomicValueWithNameInData("userLastname");
 		}
 	}
 
-	private void setRoleIds() {
-		List<DataGroup> roleGroups = userGroup.getAllGroupsWithNameInData("userRole");
-		getRolesForRolesGroups(roleGroups);
+	private void setRoleIds(User user) {
+		List<DataGroup> roleGroups = userRecordGroup.getAllGroupsWithNameInData("userRole");
+		getRolesForRolesGroups(user, roleGroups);
 	}
 
-	private void getRolesForRolesGroups(List<DataGroup> roleGroups) {
+	private void getRolesForRolesGroups(User user, List<DataGroup> roleGroups) {
 		Set<String> userRoles = user.roles;
 		for (DataGroup roleGroup : roleGroups) {
 			userRoles.add(extractRoleId(roleGroup));
@@ -94,5 +114,4 @@ public class DataGroupToUserImp implements DataGroupToUser {
 		return ((DataRecordLink) roleGroup.getFirstChildWithNameInData("userRole"))
 				.getLinkedRecordId();
 	}
-
 }
