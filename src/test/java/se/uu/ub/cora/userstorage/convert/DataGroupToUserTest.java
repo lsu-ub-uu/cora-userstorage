@@ -32,14 +32,13 @@ import se.uu.ub.cora.data.DataGroup;
 import se.uu.ub.cora.data.DataProvider;
 import se.uu.ub.cora.data.DataRecordGroup;
 import se.uu.ub.cora.data.DataRecordLink;
-import se.uu.ub.cora.data.spies.DataGroupSpy;
 import se.uu.ub.cora.data.spies.DataRecordGroupSpy;
 import se.uu.ub.cora.data.spies.DataRecordLinkSpy;
 import se.uu.ub.cora.gatekeeper.user.User;
 
 public class DataGroupToUserTest {
 
-	private static final String PASSWORD_GROUP_NAME_IN_DATA = "password";
+	// private static final String PASSWORD_GROUP_NAME_IN_DATA = "password";
 	private static final String USER_ID = "someId";
 	private DataGroupToUser dataGroupToUser;
 	private DataRecordGroup userDataRecordGroup;
@@ -158,38 +157,27 @@ public class DataGroupToUserTest {
 
 	@Test
 	public void testPasswordLinkExists() throws Exception {
-
 		DataRecordLinkSpy passwordLink = createAndConfigurePasswordLink();
-		DataGroupSpy passwordGroup = createAndConfigurePasswordGroup(passwordLink);
-		DataRecordGroupSpy userRecordGroup = createAndConfigureUserRecordGroup(passwordGroup);
+		DataRecordGroupSpy userRecordGroup = createAndConfigureUserRecordGroup(passwordLink);
 
 		User user = dataGroupToUser.groupToUser(userRecordGroup);
 
-		userRecordGroup.MCR.assertParameters("containsChildOfTypeAndName", 0, DataGroup.class,
-				PASSWORD_GROUP_NAME_IN_DATA);
-		userRecordGroup.MCR.assertParameters("getFirstChildOfTypeAndName", 0, DataGroup.class,
-				PASSWORD_GROUP_NAME_IN_DATA);
-		passwordGroup.MCR.assertParameters("getFirstChildOfTypeAndName", 0, DataRecordLink.class,
+		userRecordGroup.MCR.assertParameters("containsChildOfTypeAndName", 0, DataRecordLink.class,
+				"passwordLink");
+		userRecordGroup.MCR.assertParameters("getFirstChildOfTypeAndName", 0, DataRecordLink.class,
 				"passwordLink");
 
 		assertTrue(user.passwordId.isPresent());
 		passwordLink.MCR.assertReturn("getLinkedRecordId", 0, user.passwordId.get());
 	}
 
-	private DataRecordGroupSpy createAndConfigureUserRecordGroup(DataGroupSpy passwordGroup) {
+	private DataRecordGroupSpy createAndConfigureUserRecordGroup(DataRecordLinkSpy passwordLink) {
 		DataRecordGroupSpy userRecordGroup = new DataRecordGroupSpy();
 		userRecordGroup.MRV.setSpecificReturnValuesSupplier("containsChildOfTypeAndName",
-				() -> true, DataGroup.class, PASSWORD_GROUP_NAME_IN_DATA);
+				() -> true, DataRecordLink.class, "passwordLink");
 		userRecordGroup.MRV.setSpecificReturnValuesSupplier("getFirstChildOfTypeAndName",
-				() -> passwordGroup, DataGroup.class, PASSWORD_GROUP_NAME_IN_DATA);
-		return userRecordGroup;
-	}
-
-	private DataGroupSpy createAndConfigurePasswordGroup(DataRecordLinkSpy passwordLink) {
-		DataGroupSpy passwordGroup = new DataGroupSpy();
-		passwordGroup.MRV.setSpecificReturnValuesSupplier("getFirstChildOfTypeAndName",
 				() -> passwordLink, DataRecordLink.class, "passwordLink");
-		return passwordGroup;
+		return userRecordGroup;
 	}
 
 	private DataRecordLinkSpy createAndConfigurePasswordLink() {

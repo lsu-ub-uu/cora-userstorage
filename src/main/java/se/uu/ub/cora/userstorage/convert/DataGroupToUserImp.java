@@ -29,6 +29,7 @@ import se.uu.ub.cora.gatekeeper.user.User;
 
 public class DataGroupToUserImp implements DataGroupToUser {
 
+	private static final String PASSWORD_LINK_NAME_IN_DATA = "passwordLink";
 	private static final String PASSWORD_GROUP_NAME_IN_DATA = "password";
 	private DataRecordGroup userRecordGroup;
 
@@ -42,24 +43,6 @@ public class DataGroupToUserImp implements DataGroupToUser {
 		setRoleIds(user);
 		setPassword(user);
 		return user;
-	}
-
-	private void setPassword(User user) {
-		if (hasPassword()) {
-			String systemSecretId = getPasswordLink().getLinkedRecordId();
-			user.passwordId = Optional.of(systemSecretId);
-		}
-	}
-
-	private DataRecordLink getPasswordLink() {
-		DataGroup passwordGroup = userRecordGroup.getFirstChildOfTypeAndName(DataGroup.class,
-				PASSWORD_GROUP_NAME_IN_DATA);
-		return passwordGroup.getFirstChildOfTypeAndName(DataRecordLink.class, "passwordLink");
-	}
-
-	private boolean hasPassword() {
-		return userRecordGroup.containsChildOfTypeAndName(DataGroup.class,
-				PASSWORD_GROUP_NAME_IN_DATA);
 	}
 
 	private User setUserId() {
@@ -113,5 +96,23 @@ public class DataGroupToUserImp implements DataGroupToUser {
 	private String extractRoleId(DataGroup roleGroup) {
 		return ((DataRecordLink) roleGroup.getFirstChildWithNameInData("userRole"))
 				.getLinkedRecordId();
+	}
+
+	private void setPassword(User user) {
+		if (hasPassword()) {
+			String systemSecretId = getPasswordRecordLinkId();
+			user.passwordId = Optional.of(systemSecretId);
+		}
+	}
+
+	private boolean hasPassword() {
+		return userRecordGroup.containsChildOfTypeAndName(DataRecordLink.class,
+				PASSWORD_LINK_NAME_IN_DATA);
+	}
+
+	private String getPasswordRecordLinkId() {
+		DataRecordLink passwordLink = userRecordGroup
+				.getFirstChildOfTypeAndName(DataRecordLink.class, PASSWORD_LINK_NAME_IN_DATA);
+		return passwordLink.getLinkedRecordId();
 	}
 }
