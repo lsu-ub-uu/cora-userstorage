@@ -73,9 +73,17 @@ public class DataGroupToUserTest {
 	}
 
 	@Test
+	public void testAppTokenIds_NoAppTokenGroup() throws Exception {
+		setUpAppTokensGroup();
+
+		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
+
+		assertEquals(user.appTokenIds.size(), 0);
+	}
+
+	@Test
 	public void testAppTokenIds() throws Exception {
-		userDataRecordGroup.addChild(createAppTokenGroupWithLinkId("someAppTokenId1"));
-		userDataRecordGroup.addChild(createAppTokenGroupWithLinkId("someAppTokenId2"));
+		setUpAppTokensGroup("someAppTokenId1", "someAppTokenId2");
 
 		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
@@ -85,10 +93,21 @@ public class DataGroupToUserTest {
 
 	}
 
-	private DataGroup createAppTokenGroupWithLinkId(String appTokenId) {
-		DataGroup appTokenGroup = DataProvider.createGroupUsingNameInData("userAppTokenGroup");
-		appTokenGroup.addChild(createLinkToAppToken(appTokenId));
-		return appTokenGroup;
+	private void setUpAppTokensGroup(String... appTokenIds) {
+		if (appTokenIds.length > 0) {
+			userDataRecordGroup.addChild(createAppTokensGroupUsingAppTokens(appTokenIds));
+		}
+	}
+
+	private DataGroup createAppTokensGroupUsingAppTokens(String... appTokenIds) {
+		DataGroup appTokensGroup = DataProvider.createGroupUsingNameInData("appTokens");
+		for (String appTokenId : appTokenIds) {
+			DataGroup appTokenGroup = DataProvider.createGroupUsingNameInData("appToken");
+
+			appTokenGroup.addChild(createLinkToAppToken(appTokenId));
+			appTokensGroup.addChild(appTokenGroup);
+		}
+		return appTokensGroup;
 	}
 
 	private DataRecordLink createLinkToAppToken(String appTokenId) {

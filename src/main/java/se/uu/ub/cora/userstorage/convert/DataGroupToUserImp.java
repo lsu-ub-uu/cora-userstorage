@@ -30,7 +30,6 @@ import se.uu.ub.cora.gatekeeper.user.User;
 public class DataGroupToUserImp implements DataGroupToUser {
 
 	private static final String PASSWORD_LINK_NAME_IN_DATA = "passwordLink";
-	private static final String PASSWORD_GROUP_NAME_IN_DATA = "password";
 	private DataRecordGroup userRecordGroup;
 
 	@Override
@@ -55,27 +54,38 @@ public class DataGroupToUserImp implements DataGroupToUser {
 	}
 
 	private void setAppTokenLinkIds(User user) {
-		List<DataGroup> appTokenGroups = userRecordGroup
-				.getAllGroupsWithNameInData("userAppTokenGroup");
-		getAppTokensForAppTokenGroups(user, appTokenGroups);
-	}
-
-	private void getAppTokensForAppTokenGroups(User user, List<DataGroup> appTokenGroups) {
-		Set<String> userAppTokens = user.appTokenIds;
-		for (DataGroup appTokenGroup : appTokenGroups) {
-			userAppTokens.add(extractAppTokenId(appTokenGroup));
+		if (userRecordGroup.containsChildWithNameInData("appTokens")) {
+			DataGroup appTokensGroup = userRecordGroup.getFirstGroupWithNameInData("appTokens");
+			addAllSystemSecretsIdToUserAppTokens(user, appTokensGroup);
 		}
 	}
 
-	private String extractAppTokenId(DataGroup appTokenGroup) {
-		return ((DataRecordLink) appTokenGroup.getFirstChildWithNameInData("appTokenLink"))
-				.getLinkedRecordId();
+	private void addAllSystemSecretsIdToUserAppTokens(User user, DataGroup appTokensGroup) {
+		List<DataGroup> appTokenGroups = appTokensGroup.getAllGroupsWithNameInData("appToken");
+		for (DataGroup appTokenGroup : appTokenGroups) {
+			String linkedRecordId = getSystemSecretIdFromAppTokenGroup(appTokenGroup);
+			user.appTokenIds.add(linkedRecordId);
+		}
+	}
+
+	private String getSystemSecretIdFromAppTokenGroup(DataGroup appTokenGroup) {
+		DataRecordLink systemSecretLink = appTokenGroup
+				.getFirstChildOfTypeAndName(DataRecordLink.class, "appTokenLink");
+		return systemSecretLink.getLinkedRecordId();
 	}
 
 	private void setNames(User user) {
+		possiblySetFirstname(user);
+		possiblySetLastname(user);
+	}
+
+	private void possiblySetFirstname(User user) {
 		if (userRecordGroup.containsChildWithNameInData("userFirstname")) {
 			user.firstName = userRecordGroup.getFirstAtomicValueWithNameInData("userFirstname");
 		}
+	}
+
+	private void possiblySetLastname(User user) {
 		if (userRecordGroup.containsChildWithNameInData("userLastname")) {
 			user.lastName = userRecordGroup.getFirstAtomicValueWithNameInData("userLastname");
 		}
