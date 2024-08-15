@@ -83,9 +83,6 @@ public class UserStorageViewTest {
 	@Test
 	public void testGetUserById_userContainsInfo() throws Exception {
 		DataRecordGroupSpy userDataGroup = new DataRecordGroupSpy();
-		userDataGroup.MRV.setReturnValues("getAllGroupsWithNameInData", List.of(),
-				"userAppTokenGroup");
-
 		recordStorage.MRV.setReturnValues("read", List.of(userDataGroup), Collections.emptyList(),
 				USER_ID);
 
@@ -125,8 +122,6 @@ public class UserStorageViewTest {
 
 	private DataGroupSpy setupRecordStorageToReturnUserForReadListUsingFilter() {
 		DataGroupSpy userDataGroup = new DataGroupSpy();
-		userDataGroup.MRV.setReturnValues("getAllGroupsWithNameInData", List.of(),
-				"userAppTokenGroup");
 		StorageReadResult readResult = new StorageReadResult();
 		readResult.listOfDataGroups = List.of(userDataGroup);
 		readResult.totalNumberOfMatches = 1;
@@ -200,8 +195,6 @@ public class UserStorageViewTest {
 	private void setupRecordStorageToReturnUserForReadListUsingFilterNumberOfResults(
 			int totalNumberOfMatches) {
 		DataGroupSpy userDataGroup = new DataGroupSpy();
-		userDataGroup.MRV.setReturnValues("getAllGroupsWithNameInData", List.of(),
-				"userAppTokenGroup");
 		StorageReadResult readResult = new StorageReadResult();
 		readResult.listOfDataGroups = List.of(userDataGroup, userDataGroup);
 		readResult.totalNumberOfMatches = totalNumberOfMatches;
