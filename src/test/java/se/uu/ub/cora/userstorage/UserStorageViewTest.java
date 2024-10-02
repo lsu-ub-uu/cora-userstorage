@@ -47,7 +47,7 @@ import se.uu.ub.cora.storage.spies.RecordStorageSpy;
 import se.uu.ub.cora.userstorage.spies.DataGroupToUserSpy;
 
 public class UserStorageViewTest {
-	private static final String ID_FROM_LOGIN = "someIdFromLogin";
+	private static final String LOGIN_ID = "loginId";
 	private static final String APP_TOKEN_ID = "someAppTokenId";
 	private static final String USER_ID = "someUserId";
 	private RecordStorageSpy recordStorage;
@@ -108,10 +108,10 @@ public class UserStorageViewTest {
 	}
 
 	@Test
-	public void testGetUserByIdFromLogin_usingDependencies() throws Exception {
+	public void testGetUserByLoginId_usingDependencies() throws Exception {
 		setupRecordStorageToReturnUserForReadListUsingFilter();
 
-		userStorageView.getUserByIdFromLogin(ID_FROM_LOGIN);
+		userStorageView.getUserByLoginId(LOGIN_ID);
 
 		recordStorage.MCR.assertParameterAsEqual("readList", 0, "types", List.of("user"));
 		var filter = recordStorage.MCR
@@ -131,10 +131,10 @@ public class UserStorageViewTest {
 	}
 
 	@Test
-	public void testGetUserByIdFromLogin_userContainsInfo() throws Exception {
+	public void testGetUserByLoginId_userContainsInfo() throws Exception {
 		DataGroupSpy userDataGroup = setupRecordStorageToReturnUserForReadListUsingFilter();
 
-		User user = userStorageView.getUserByIdFromLogin(ID_FROM_LOGIN);
+		User user = userStorageView.getUserByLoginId(LOGIN_ID);
 
 		dataFactorySpy.MCR.assertParameters("factorRecordGroupFromDataGroup", 0, userDataGroup);
 		Object recordGroup = dataFactorySpy.MCR.getReturnValue("factorRecordGroupFromDataGroup", 0);
@@ -143,10 +143,10 @@ public class UserStorageViewTest {
 	}
 
 	@Test
-	public void testGetUserByIdFromLogin_filterContainsCorrectInfo() throws Exception {
+	public void testGetUserByLoginId_filterContainsCorrectInfo() throws Exception {
 		setupRecordStorageToReturnUserForReadListUsingFilter();
 
-		userStorageView.getUserByIdFromLogin(ID_FROM_LOGIN);
+		userStorageView.getUserByLoginId(LOGIN_ID);
 
 		Filter filter = (Filter) recordStorage.MCR
 				.getValueForMethodNameAndCallNumberAndParameterName("readList", 0, "filter");
@@ -161,34 +161,34 @@ public class UserStorageViewTest {
 		Condition userIdCondition = part.conditions.get(0);
 		assertEquals(userIdCondition.key(), "userId");
 		assertEquals(userIdCondition.operator(), RelationalOperator.EQUAL_TO);
-		assertEquals(userIdCondition.value(), ID_FROM_LOGIN);
+		assertEquals(userIdCondition.value(), LOGIN_ID);
 	}
 
 	@Test
-	public void testGetUserByIdFromLogin_moreThanOneUserFoundInStorage() throws Exception {
+	public void testGetUserByLoginId_moreThanOneUserFoundInStorage() throws Exception {
 		setupRecordStorageToReturnUserForReadListUsingFilterNumberOfResults(2);
 
 		try {
-			userStorageView.getUserByIdFromLogin(ID_FROM_LOGIN);
+			userStorageView.getUserByLoginId(LOGIN_ID);
 			assertTrue(false);
 		} catch (Exception e) {
 			assertTrue(e instanceof UserStorageViewException);
 			assertEquals(e.getMessage(),
-					"Error reading user with login id: " + ID_FROM_LOGIN + " from storage.");
+					"Error reading user with login id: " + LOGIN_ID + " from storage.");
 		}
 	}
 
 	@Test
-	public void testGetUserByIdFromLogin_noUserFoundInStorage() throws Exception {
+	public void testGetUserByLoginId_noUserFoundInStorage() throws Exception {
 		setupRecordStorageToReturnUserForReadListUsingFilterNumberOfResults(0);
 
 		try {
-			userStorageView.getUserByIdFromLogin(ID_FROM_LOGIN);
+			userStorageView.getUserByLoginId(LOGIN_ID);
 			assertTrue(false);
 		} catch (Exception e) {
 			assertTrue(e instanceof UserStorageViewException);
 			assertEquals(e.getMessage(),
-					"Error reading user with login id: " + ID_FROM_LOGIN + " from storage.");
+					"Error reading user with login id: " + LOGIN_ID + " from storage.");
 		}
 	}
 
@@ -203,17 +203,17 @@ public class UserStorageViewTest {
 	}
 
 	@Test
-	public void testGetUserByIdFromLogin_throwsError() throws Exception {
+	public void testGetUserByLoginId_throwsError() throws Exception {
 		RecordNotFoundException error = RecordNotFoundException.withMessage("error from spy");
 		recordStorage.MRV.setAlwaysThrowException("readList", error);
 
 		try {
-			userStorageView.getUserByIdFromLogin(ID_FROM_LOGIN);
+			userStorageView.getUserByLoginId(LOGIN_ID);
 			assertTrue(false);
 		} catch (Exception e) {
 			assertTrue(e instanceof UserStorageViewException);
 			assertEquals(e.getMessage(),
-					"Error reading user with login id: " + ID_FROM_LOGIN + " from storage.");
+					"Error reading user with login id: " + LOGIN_ID + " from storage.");
 			assertSame(e.getCause(), error);
 		}
 	}
