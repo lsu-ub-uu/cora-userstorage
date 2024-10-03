@@ -65,6 +65,8 @@ public class DataGroupToUserTest {
 		recordDataGroup.addChild(
 				DataProvider.createAtomicUsingNameInDataAndValue("activeStatus", "inactive"));
 		recordDataGroup.addChild(
+				DataProvider.createAtomicUsingNameInDataAndValue("userId", "someLoginId"));
+		recordDataGroup.addChild(
 				DataProvider.createAtomicUsingNameInDataAndValue("userFirstname", "someFirstName"));
 		recordDataGroup.addChild(
 				DataProvider.createAtomicUsingNameInDataAndValue("userLastname", "someLastName"));
@@ -124,6 +126,13 @@ public class DataGroupToUserTest {
 		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
 		assertTrue(user.active);
+	}
+
+	@Test
+	public void testloginId() throws Exception {
+		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
+
+		assertEquals(user.loginId, "someLoginId");
 	}
 
 	@Test
