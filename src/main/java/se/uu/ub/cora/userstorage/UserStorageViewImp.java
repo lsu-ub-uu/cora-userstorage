@@ -73,29 +73,29 @@ public class UserStorageViewImp implements UserStorageView {
 	}
 
 	@Override
-	public User getUserByIdFromLogin(String idFromLogin) {
+	public User getUserByLoginId(String loginId) {
 		try {
-			return tryToGetUserByIdFromLogin(idFromLogin);
+			return tryToGetUserByLoginId(loginId);
 		} catch (UserStorageViewException e) {
 			throw e;
 		} catch (Exception e) {
-			String formatErrorMessage = MessageFormat.format(ERROR_MESSAGE_LOGIN_ID, idFromLogin);
+			String formatErrorMessage = MessageFormat.format(ERROR_MESSAGE_LOGIN_ID, loginId);
 			throw UserStorageViewException.usingMessageAndException(formatErrorMessage, e);
 		}
 	}
 
-	private User tryToGetUserByIdFromLogin(String idFromLogin) {
-		Filter filter = createFilter(idFromLogin);
+	private User tryToGetUserByLoginId(String loginId) {
+		Filter filter = createFilter(loginId);
 		StorageReadResult usersList = recordStorage.readList(List.of("user"), filter);
-		assertOnlyOneUserFound(usersList, idFromLogin);
+		assertOnlyOneUserFound(usersList, loginId);
 		DataGroup userDataGroup = usersList.listOfDataGroups.get(0);
 		DataRecordGroup recordGroup = DataProvider.createRecordGroupFromDataGroup(userDataGroup);
 		return dataGroupToUser.groupToUser(recordGroup);
 	}
 
-	private void assertOnlyOneUserFound(StorageReadResult userReadResult, String idFromLogin) {
+	private void assertOnlyOneUserFound(StorageReadResult userReadResult, String loginId) {
 		if (foundNoneOrMultipleUsers(userReadResult)) {
-			String formatErrorMessage = MessageFormat.format(ERROR_MESSAGE_LOGIN_ID, idFromLogin);
+			String formatErrorMessage = MessageFormat.format(ERROR_MESSAGE_LOGIN_ID, loginId);
 			throw UserStorageViewException.usingMessage(formatErrorMessage);
 		}
 	}
@@ -104,12 +104,11 @@ public class UserStorageViewImp implements UserStorageView {
 		return userReadResult.totalNumberOfMatches != 1;
 	}
 
-	private Filter createFilter(String idFromLogin) {
+	private Filter createFilter(String loginId) {
 		Filter filter = new Filter();
 		Part part = new Part();
 		filter.include.add(part);
-		Condition userIdCondition = new Condition("userId", RelationalOperator.EQUAL_TO,
-				idFromLogin);
+		Condition userIdCondition = new Condition("userId", RelationalOperator.EQUAL_TO, loginId);
 		part.conditions.add(userIdCondition);
 		return filter;
 	}

@@ -38,6 +38,7 @@ public class DataGroupToUserImp implements DataGroupToUser {
 		User user = setUserId();
 		setActiveStatus(user);
 		setAppTokenLinkIds(user);
+		addLoginId(user);
 		setNames(user);
 		setRoleIds(user);
 		setPassword(user);
@@ -77,6 +78,10 @@ public class DataGroupToUserImp implements DataGroupToUser {
 	private void setNames(User user) {
 		possiblySetFirstname(user);
 		possiblySetLastname(user);
+	}
+
+	private void addLoginId(User user) {
+		user.loginId = userRecordGroup.getFirstAtomicValueWithNameInData("userId");
 	}
 
 	private void possiblySetFirstname(User user) {
