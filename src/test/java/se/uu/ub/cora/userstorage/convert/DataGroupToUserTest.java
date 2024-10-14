@@ -37,8 +37,6 @@ import se.uu.ub.cora.data.spies.DataRecordLinkSpy;
 import se.uu.ub.cora.gatekeeper.user.User;
 
 public class DataGroupToUserTest {
-
-	// private static final String PASSWORD_GROUP_NAME_IN_DATA = "password";
 	private static final String USER_ID = "someId";
 	private DataGroupToUser dataGroupToUser;
 	private DataRecordGroup userDataRecordGroup;
@@ -65,7 +63,7 @@ public class DataGroupToUserTest {
 		recordDataGroup.addChild(
 				DataProvider.createAtomicUsingNameInDataAndValue("activeStatus", "inactive"));
 		recordDataGroup.addChild(
-				DataProvider.createAtomicUsingNameInDataAndValue("userId", "someLoginId"));
+				DataProvider.createAtomicUsingNameInDataAndValue("loginId", "someLoginId"));
 		recordDataGroup.addChild(
 				DataProvider.createAtomicUsingNameInDataAndValue("userFirstname", "someFirstName"));
 		recordDataGroup.addChild(
@@ -92,7 +90,6 @@ public class DataGroupToUserTest {
 		assertEquals(user.appTokenIds.size(), 2);
 		assertTrue(user.appTokenIds.contains("someAppTokenId1"));
 		assertTrue(user.appTokenIds.contains("someAppTokenId2"));
-
 	}
 
 	private void setUpAppTokensGroup(String... appTokenIds) {

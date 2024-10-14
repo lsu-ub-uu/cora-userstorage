@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Uppsala University Library
+ * Copyright 2022, 2024 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -22,8 +22,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import se.uu.ub.cora.data.DataGroup;
-import se.uu.ub.cora.data.DataProvider;
 import se.uu.ub.cora.data.DataRecordGroup;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageView;
 import se.uu.ub.cora.gatekeeper.storage.UserStorageViewException;
@@ -86,10 +84,9 @@ public class UserStorageViewImp implements UserStorageView {
 
 	private User tryToGetUserByLoginId(String loginId) {
 		Filter filter = createFilter(loginId);
-		StorageReadResult usersList = recordStorage.readList(List.of("user"), filter);
+		StorageReadResult usersList = recordStorage.readList("user", filter);
 		assertOnlyOneUserFound(usersList, loginId);
-		DataGroup userDataGroup = usersList.listOfDataGroups.get(0);
-		DataRecordGroup recordGroup = DataProvider.createRecordGroupFromDataGroup(userDataGroup);
+		DataRecordGroup recordGroup = usersList.listOfDataRecordGroups.get(0);
 		return dataGroupToUser.groupToUser(recordGroup);
 	}
 
@@ -108,7 +105,7 @@ public class UserStorageViewImp implements UserStorageView {
 		Filter filter = new Filter();
 		Part part = new Part();
 		filter.include.add(part);
-		Condition userIdCondition = new Condition("userId", RelationalOperator.EQUAL_TO, loginId);
+		Condition userIdCondition = new Condition("loginId", RelationalOperator.EQUAL_TO, loginId);
 		part.conditions.add(userIdCondition);
 		return filter;
 	}

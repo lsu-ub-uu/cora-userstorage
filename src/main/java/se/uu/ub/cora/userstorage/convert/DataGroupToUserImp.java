@@ -81,7 +81,7 @@ public class DataGroupToUserImp implements DataGroupToUser {
 	}
 
 	private void addLoginId(User user) {
-		user.loginId = userRecordGroup.getFirstAtomicValueWithNameInData("userId");
+		user.loginId = userRecordGroup.getFirstAtomicValueWithNameInData("loginId");
 	}
 
 	private void possiblySetFirstname(User user) {
