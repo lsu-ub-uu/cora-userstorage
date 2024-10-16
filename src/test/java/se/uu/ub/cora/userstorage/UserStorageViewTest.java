@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Uppsala University Library
+ * Copyright 2022, 2024 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -61,7 +61,6 @@ public class UserStorageViewTest {
 		DataProvider.onlyForTestSetDataFactory(dataFactorySpy);
 
 		recordStorage = new RecordStorageSpy();
-		recordStorage.MRV.setDefaultReturnValuesSupplier("read", () -> new DataRecordGroupSpy());
 		dataGroupToUser = new DataGroupToUserSpy();
 		userStorageView = UserStorageViewImp
 				.usingRecordStorageAndRecordTypeHandlerFactory(recordStorage, dataGroupToUser);
@@ -113,33 +112,30 @@ public class UserStorageViewTest {
 
 		userStorageView.getUserByLoginId(LOGIN_ID);
 
-		recordStorage.MCR.assertParameterAsEqual("readList", 0, "types", List.of("user"));
-		var filter = recordStorage.MCR
-				.getValueForMethodNameAndCallNumberAndParameterName("readList", 0, "filter");
+		recordStorage.MCR.assertParameterAsEqual("readList", 0, "type", "user");
+		var filter = recordStorage.MCR.getParameterForMethodAndCallNumberAndParameter("readList", 0,
+				"filter");
 		assertTrue(filter instanceof Filter);
-
 	}
 
-	private DataGroupSpy setupRecordStorageToReturnUserForReadListUsingFilter() {
-		DataGroupSpy userDataGroup = new DataGroupSpy();
+	private DataRecordGroupSpy setupRecordStorageToReturnUserForReadListUsingFilter() {
+		DataRecordGroupSpy userRecord = new DataRecordGroupSpy();
 		StorageReadResult readResult = new StorageReadResult();
-		readResult.listOfDataGroups = List.of(userDataGroup);
+		readResult.listOfDataRecordGroups = List.of(userRecord);
 		readResult.totalNumberOfMatches = 1;
 		recordStorage.MRV.setDefaultReturnValuesSupplier("readList",
 				(Supplier<StorageReadResult>) () -> readResult);
-		return userDataGroup;
+		return userRecord;
 	}
 
 	@Test
 	public void testGetUserByLoginId_userContainsInfo() throws Exception {
-		DataGroupSpy userDataGroup = setupRecordStorageToReturnUserForReadListUsingFilter();
+		DataRecordGroupSpy userDataRecordGroupFromStorage = setupRecordStorageToReturnUserForReadListUsingFilter();
 
 		User user = userStorageView.getUserByLoginId(LOGIN_ID);
 
-		dataFactorySpy.MCR.assertParameters("factorRecordGroupFromDataGroup", 0, userDataGroup);
-		Object recordGroup = dataFactorySpy.MCR.getReturnValue("factorRecordGroupFromDataGroup", 0);
 		dataGroupToUser.MCR.assertReturn("groupToUser", 0, user);
-		dataGroupToUser.MCR.assertParameters("groupToUser", 0, recordGroup);
+		dataGroupToUser.MCR.assertParameters("groupToUser", 0, userDataRecordGroupFromStorage);
 	}
 
 	@Test
@@ -149,7 +145,7 @@ public class UserStorageViewTest {
 		userStorageView.getUserByLoginId(LOGIN_ID);
 
 		Filter filter = (Filter) recordStorage.MCR
-				.getValueForMethodNameAndCallNumberAndParameterName("readList", 0, "filter");
+				.getParameterForMethodAndCallNumberAndParameter("readList", 0, "filter");
 		assertTrue(filter.fromNoIsDefault());
 		assertTrue(filter.toNoIsDefault());
 		assertTrue(filter.exclude.isEmpty());
@@ -159,7 +155,7 @@ public class UserStorageViewTest {
 
 		Part part = include.get(0);
 		Condition userIdCondition = part.conditions.get(0);
-		assertEquals(userIdCondition.key(), "userId");
+		assertEquals(userIdCondition.key(), "loginId");
 		assertEquals(userIdCondition.operator(), RelationalOperator.EQUAL_TO);
 		assertEquals(userIdCondition.value(), LOGIN_ID);
 	}
@@ -264,7 +260,6 @@ public class UserStorageViewTest {
 					"Error reading systemSecret with id: someId from storage.");
 			assertSame(e.getCause(), error);
 		}
-
 	}
 
 	@Test
