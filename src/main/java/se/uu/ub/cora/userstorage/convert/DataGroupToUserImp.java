@@ -31,30 +31,32 @@ public class DataGroupToUserImp implements DataGroupToUser {
 
 	private static final String PASSWORD_LINK_NAME_IN_DATA = "passwordLink";
 	private DataRecordGroup userRecordGroup;
+	private User user;
 
 	@Override
 	public User groupToUser(DataRecordGroup dataGroup) {
-		this.userRecordGroup = dataGroup;
-		User user = setUserId();
-		setActiveStatus(user);
-		setAppTokenLinkIds(user);
-		addLoginId(user);
-		setNames(user);
-		setRoleIds(user);
-		setPassword(user);
+		userRecordGroup = dataGroup;
+		user = createUserAndSetUserId();
+		setActiveStatus();
+		setAppTokenLinkIds();
+		addLoginId();
+		setNames();
+		setRoleIds();
+		setPassword();
+		setPermissionUnitIds();
 		return user;
 	}
 
-	private User setUserId() {
+	private User createUserAndSetUserId() {
 		return new User(userRecordGroup.getId());
 	}
 
-	private void setActiveStatus(User user) {
+	private void setActiveStatus() {
 		user.active = "active"
 				.equals(userRecordGroup.getFirstAtomicValueWithNameInData("activeStatus"));
 	}
 
-	private void setAppTokenLinkIds(User user) {
+	private void setAppTokenLinkIds() {
 		if (userRecordGroup.containsChildWithNameInData("appTokens")) {
 			DataGroup appTokensGroup = userRecordGroup.getFirstGroupWithNameInData("appTokens");
 			addAllSystemSecretsIdToUserAppTokens(user, appTokensGroup);
@@ -75,12 +77,12 @@ public class DataGroupToUserImp implements DataGroupToUser {
 		return systemSecretLink.getLinkedRecordId();
 	}
 
-	private void setNames(User user) {
+	private void setNames() {
 		possiblySetFirstname(user);
 		possiblySetLastname(user);
 	}
 
-	private void addLoginId(User user) {
+	private void addLoginId() {
 		user.loginId = userRecordGroup.getFirstAtomicValueWithNameInData("loginId");
 	}
 
@@ -96,7 +98,7 @@ public class DataGroupToUserImp implements DataGroupToUser {
 		}
 	}
 
-	private void setRoleIds(User user) {
+	private void setRoleIds() {
 		List<DataGroup> roleGroups = userRecordGroup.getAllGroupsWithNameInData("userRole");
 		getRolesForRolesGroups(user, roleGroups);
 	}
@@ -109,11 +111,11 @@ public class DataGroupToUserImp implements DataGroupToUser {
 	}
 
 	private String extractRoleId(DataGroup roleGroup) {
-		return ((DataRecordLink) roleGroup.getFirstChildWithNameInData("userRole"))
+		return roleGroup.getFirstChildOfTypeAndName(DataRecordLink.class, "userRole")
 				.getLinkedRecordId();
 	}
 
-	private void setPassword(User user) {
+	private void setPassword() {
 		if (hasPassword()) {
 			String systemSecretId = getPasswordRecordLinkId();
 			user.passwordId = Optional.of(systemSecretId);
@@ -129,5 +131,30 @@ public class DataGroupToUserImp implements DataGroupToUser {
 		DataRecordLink passwordLink = userRecordGroup
 				.getFirstChildOfTypeAndName(DataRecordLink.class, PASSWORD_LINK_NAME_IN_DATA);
 		return passwordLink.getLinkedRecordId();
+	}
+
+	private void setPermissionUnitIds() {
+		if (hasPermissionUnits()) {
+			addPermissionsUnitsToUserFromRecord(user);
+		}
+	}
+
+	private boolean hasPermissionUnits() {
+		return userRecordGroup.containsChildWithNameInData("permissionUnit");
+	}
+
+	private void addPermissionsUnitsToUserFromRecord(User user) {
+		var permissionUnitLinks = readPermissionUnitsFromRecord();
+		addPermissionUnitsToUser(user, permissionUnitLinks);
+	}
+
+	private List<DataRecordLink> readPermissionUnitsFromRecord() {
+		return userRecordGroup.getChildrenOfTypeAndName(DataRecordLink.class, "permissionUnit");
+	}
+
+	private void addPermissionUnitsToUser(User user, List<DataRecordLink> permissionUnitLinks) {
+		for (DataRecordLink permissionUnitLink : permissionUnitLinks) {
+			user.permissionUnitIds.add(permissionUnitLink.getLinkedRecordId());
+		}
 	}
 }
