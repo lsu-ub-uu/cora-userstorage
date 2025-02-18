@@ -1,5 +1,5 @@
 /*
- * Copyright 2022, 2024 Uppsala University Library
+ * Copyright 2022, 2024, 2025 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -23,15 +23,18 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import se.uu.ub.cora.data.DataGroup;
 import se.uu.ub.cora.data.DataProvider;
-import se.uu.ub.cora.data.DataRecordGroup;
 import se.uu.ub.cora.data.DataRecordLink;
+import se.uu.ub.cora.data.spies.DataGroupSpy;
 import se.uu.ub.cora.data.spies.DataRecordGroupSpy;
 import se.uu.ub.cora.data.spies.DataRecordLinkSpy;
 import se.uu.ub.cora.gatekeeper.user.User;
@@ -39,17 +42,17 @@ import se.uu.ub.cora.gatekeeper.user.User;
 public class DataGroupToUserTest {
 	private static final String USER_ID = "someId";
 	private DataGroupToUser dataGroupToUser;
-	private DataRecordGroup userDataRecordGroup;
+	private DataRecordGroupSpy userDataRecordGroup;
 
 	@BeforeMethod
 	public void beforeMethod() {
 		DataProvider.onlyForTestSetDataFactory(null);
 		dataGroupToUser = new DataGroupToUserImp();
-		userDataRecordGroup = createUserDataGroup();
+		userDataRecordGroup = createDataRecordGroup();
 	}
 
 	@Test
-	public void testId() throws Exception {
+	public void testId() {
 		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
 		assertEquals(user.id, USER_ID);
@@ -57,24 +60,16 @@ public class DataGroupToUserTest {
 		assertFalse(user.active);
 	}
 
-	private DataRecordGroup createUserDataGroup() {
-		DataRecordGroup recordDataGroup = DataProvider.createRecordGroupUsingNameInData("user");
-		recordDataGroup.setId(USER_ID);
-		recordDataGroup.addChild(
-				DataProvider.createAtomicUsingNameInDataAndValue("activeStatus", "inactive"));
-		recordDataGroup.addChild(
-				DataProvider.createAtomicUsingNameInDataAndValue("loginId", "someLoginId"));
-		recordDataGroup.addChild(
-				DataProvider.createAtomicUsingNameInDataAndValue("userFirstname", "someFirstName"));
-		recordDataGroup.addChild(
-				DataProvider.createAtomicUsingNameInDataAndValue("userLastname", "someLastName"));
-
-		return recordDataGroup;
+	private DataRecordGroupSpy createDataRecordGroup() {
+		DataRecordGroupSpy dataRecordGroup = new DataRecordGroupSpy();
+		dataRecordGroup.MRV.setDefaultReturnValuesSupplier("getId", () -> USER_ID);
+		dataRecordGroup.MRV.setSpecificReturnValuesSupplier("getFirstAtomicValueWithNameInData",
+				() -> "inactive", "activeStatus");
+		return dataRecordGroup;
 	}
 
 	@Test
-	public void testAppTokenIds_NoAppTokenGroup() throws Exception {
-		setUpAppTokensGroup();
+	public void testAppTokenIds_NoAppTokenGroup() {
 
 		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
@@ -82,8 +77,13 @@ public class DataGroupToUserTest {
 	}
 
 	@Test
-	public void testAppTokenIds() throws Exception {
-		setUpAppTokensGroup("someAppTokenId1", "someAppTokenId2");
+	public void testAppTokenIds() {
+		DataGroup appTokensGroup = setAppTokenWithTokenIds("someAppTokenId1", "someAppTokenId2");
+
+		userDataRecordGroup.MRV.setSpecificReturnValuesSupplier("getFirstGroupWithNameInData",
+				() -> appTokensGroup, "appTokens");
+		userDataRecordGroup.MRV.setSpecificReturnValuesSupplier("containsChildWithNameInData",
+				() -> true, "appTokens");
 
 		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
@@ -92,33 +92,40 @@ public class DataGroupToUserTest {
 		assertTrue(user.appTokenIds.contains("someAppTokenId2"));
 	}
 
-	private void setUpAppTokensGroup(String... appTokenIds) {
-		if (appTokenIds.length > 0) {
-			userDataRecordGroup.addChild(createAppTokensGroupUsingAppTokens(appTokenIds));
-		}
-	}
-
-	private DataGroup createAppTokensGroupUsingAppTokens(String... appTokenIds) {
-		DataGroup appTokensGroup = DataProvider.createGroupUsingNameInData("appTokens");
-		for (String appTokenId : appTokenIds) {
-			DataGroup appTokenGroup = DataProvider.createGroupUsingNameInData("appToken");
-
-			appTokenGroup.addChild(createLinkToAppToken(appTokenId));
-			appTokensGroup.addChild(appTokenGroup);
-		}
+	private DataGroup setAppTokenWithTokenIds(String... tokenIds) {
+		DataGroupSpy appTokensGroup = new DataGroupSpy();
+		List<DataGroup> appTokenGroups = createApptokenGroupsForTokenIds(tokenIds);
+		appTokensGroup.MRV.setSpecificReturnValuesSupplier("getAllGroupsWithNameInData",
+				() -> appTokenGroups, "appToken");
 		return appTokensGroup;
 	}
 
-	private DataRecordLink createLinkToAppToken(String appTokenId) {
-		return DataProvider.createRecordLinkUsingNameInDataAndTypeAndId("appTokenLink", "appToken",
-				appTokenId);
+	private List<DataGroup> createApptokenGroupsForTokenIds(String... tokenIds) {
+		List<DataGroup> appTokenGroups = new ArrayList<>();
+		for (String tokenId : tokenIds) {
+			DataGroupSpy appTokenGroup = createAppTokenGroup(tokenId);
+			appTokenGroups.add(appTokenGroup);
+		}
+		return appTokenGroups;
+	}
+
+	private DataGroupSpy createAppTokenGroup(String tokenId) {
+		DataGroupSpy appTokenGroup = new DataGroupSpy();
+		appTokenGroup.MRV.setSpecificReturnValuesSupplier("getFirstChildOfTypeAndName",
+				() -> createLinkToAppToken(tokenId), DataRecordLink.class, "appTokenLink");
+		return appTokenGroup;
+	}
+
+	private DataRecordLinkSpy createLinkToAppToken(String tokenId) {
+		DataRecordLinkSpy tokenLink = new DataRecordLinkSpy();
+		tokenLink.MRV.setDefaultReturnValuesSupplier("getLinkedRecordId", () -> tokenId);
+		return tokenLink;
 	}
 
 	@Test
-	public void testActive() throws Exception {
-		userDataRecordGroup.removeFirstChildWithNameInData("activeStatus");
-		userDataRecordGroup.addChild(
-				DataProvider.createAtomicUsingNameInDataAndValue("activeStatus", "active"));
+	public void testActive() {
+		userDataRecordGroup.MRV.setSpecificReturnValuesSupplier("getFirstAtomicValueWithNameInData",
+				() -> "active", "activeStatus");
 
 		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
@@ -126,24 +133,41 @@ public class DataGroupToUserTest {
 	}
 
 	@Test
-	public void testloginId() throws Exception {
+	public void testloginId() {
+		userDataRecordGroup.MRV.setSpecificReturnValuesSupplier("getFirstAtomicValueWithNameInData",
+				() -> "someLoginId", "loginId");
+
 		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
 		assertEquals(user.loginId, "someLoginId");
 	}
 
 	@Test
-	public void testName() throws Exception {
+	public void testFirstName() {
+		userDataRecordGroup.MRV.setSpecificReturnValuesSupplier("containsChildWithNameInData",
+				() -> true, "userFirstname");
+		userDataRecordGroup.MRV.setSpecificReturnValuesSupplier("getFirstAtomicValueWithNameInData",
+				() -> "someFirstName", "userFirstname");
+
 		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
 		assertEquals(user.firstName, "someFirstName");
+	}
+
+	@Test
+	public void testLastName() {
+		userDataRecordGroup.MRV.setSpecificReturnValuesSupplier("containsChildWithNameInData",
+				() -> true, "userLastname");
+		userDataRecordGroup.MRV.setSpecificReturnValuesSupplier("getFirstAtomicValueWithNameInData",
+				() -> "someLastName", "userLastname");
+
+		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
+
 		assertEquals(user.lastName, "someLastName");
 	}
 
 	@Test
-	public void testNameNotInData() throws Exception {
-		userDataRecordGroup.removeFirstChildWithNameInData("userFirstname");
-		userDataRecordGroup.removeFirstChildWithNameInData("userLastname");
+	public void testNameNotInData() {
 		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
 		assertNull(user.firstName);
@@ -151,9 +175,8 @@ public class DataGroupToUserTest {
 	}
 
 	@Test
-	public void testRoleIds() throws Exception {
-		userDataRecordGroup.addChild(createUserRoleGroup("someRoleId1"));
-		userDataRecordGroup.addChild(createUserRoleGroup("someRoleId2"));
+	public void testRoleIds() {
+		setUpUserWithRolesIds("someRoleId1", "someRoleId2");
 
 		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
@@ -162,26 +185,34 @@ public class DataGroupToUserTest {
 		assertTrue(user.roles.contains("someRoleId2"));
 	}
 
-	private DataGroup createUserRoleGroup(String roleId) {
-		DataGroup appTokenGroup = DataProvider.createGroupUsingNameInData("userRole");
-		appTokenGroup.addChild(createLinkToRole(roleId));
-		return appTokenGroup;
+	private void setUpUserWithRolesIds(String... roleIds) {
+		List<DataGroup> roleGroups = new ArrayList<>();
+		for (String roleId : roleIds) {
+			DataGroupSpy roleGroup = new DataGroupSpy();
+			roleGroup.MRV.setSpecificReturnValuesSupplier("getFirstChildOfTypeAndName",
+					() -> createRoleLink(roleId), DataRecordLink.class, "userRole");
+			roleGroups.add(roleGroup);
+		}
+
+		userDataRecordGroup.MRV.setSpecificReturnValuesSupplier("getAllGroupsWithNameInData",
+				() -> roleGroups, "userRole");
 	}
 
-	private DataRecordLink createLinkToRole(String roleId) {
-		return DataProvider.createRecordLinkUsingNameInDataAndTypeAndId("userRole", "appToken",
-				roleId);
+	private DataRecordLinkSpy createRoleLink(String roleId) {
+		DataRecordLinkSpy roleLink = new DataRecordLinkSpy();
+		roleLink.MRV.setDefaultReturnValuesSupplier("getLinkedRecordId", () -> roleId);
+		return roleLink;
 	}
 
 	@Test
-	public void testPasswordLinkDoesNotExist() throws Exception {
+	public void testPasswordLinkDoesNotExist() {
 		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
 
 		assertTrue(user.passwordId.isEmpty());
 	}
 
 	@Test
-	public void testPasswordLinkExists() throws Exception {
+	public void testPasswordLinkExists() {
 		DataRecordLinkSpy passwordLink = createAndConfigurePasswordLink();
 		DataRecordGroupSpy userRecordGroup = createAndConfigureUserRecordGroup(passwordLink);
 
@@ -210,5 +241,42 @@ public class DataGroupToUserTest {
 		passwordLink.MRV.setDefaultReturnValuesSupplier("getLinkedRecordId",
 				() -> "someSystemSecretId");
 		return passwordLink;
+	}
+
+	@Test
+	public void testPermissionUnitDoesNotExists() {
+		userDataRecordGroup.MRV.setSpecificReturnValuesSupplier("containsChildWithNameInData",
+				() -> false, "permissionUnit");
+
+		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
+
+		assertTrue(user.permissionUnitIds.isEmpty());
+	}
+
+	@Test
+	public void testPermissionUnitExists() {
+		setTwoPermissionUnits();
+
+		User user = dataGroupToUser.groupToUser(userDataRecordGroup);
+
+		Set<String> permissionUnitIds = user.permissionUnitIds;
+		assertEquals(permissionUnitIds.size(), 2);
+		assertTrue(permissionUnitIds.contains("someId"));
+		assertTrue(permissionUnitIds.contains("someId2"));
+	}
+
+	private void setTwoPermissionUnits() {
+		userDataRecordGroup.MRV.setSpecificReturnValuesSupplier("containsChildWithNameInData",
+				() -> true, "permissionUnit");
+
+		DataRecordLinkSpy permissionUnitLink = new DataRecordLinkSpy();
+		permissionUnitLink.MRV.setDefaultReturnValuesSupplier("getLinkedRecordId", () -> "someId");
+		DataRecordLinkSpy permissionUnitLink2 = new DataRecordLinkSpy();
+		permissionUnitLink2.MRV.setDefaultReturnValuesSupplier("getLinkedRecordId",
+				() -> "someId2");
+
+		userDataRecordGroup.MRV.setSpecificReturnValuesSupplier("getChildrenOfTypeAndName",
+				() -> List.of(permissionUnitLink, permissionUnitLink2), DataRecordLink.class,
+				"permissionUnit");
 	}
 }

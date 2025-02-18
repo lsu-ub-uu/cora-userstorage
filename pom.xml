@@ -22,7 +22,7 @@
 	<parent>
 		<groupId>se.uu.ub.cora</groupId>
 		<artifactId>cora-parent</artifactId>
-		<version>2.6.0</version>
+		<version>2.7.0</version>
 	</parent>
 
 	<artifactId>userstorage</artifactId>
@@ -34,9 +34,9 @@
 	<properties>
 		<logger.version>2.10.0</logger.version>
 		<logger-spies.version>1.5.0</logger-spies.version>
-		<gatekeeper.version>5.0.0</gatekeeper.version>
-		<storage.version>9.3.0</storage.version>
-		<storagespies.version>1.10.0</storagespies.version>
+		<gatekeeper.version>5.1-SNAPSHOT</gatekeeper.version>
+		<storage.version>9.5.0</storage.version>
+		<storagespies.version>1.12.0</storagespies.version>
 		<coradata.version>10.0.0</coradata.version>
 		<basicdata.version>6.0.0</basicdata.version>
 		<beefeater.version>3.13.0</beefeater.version>

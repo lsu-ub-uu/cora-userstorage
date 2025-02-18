@@ -1,5 +1,5 @@
 /*
- * Copyright 2022, 2024 Uppsala University Library
+ * Copyright 2022, 2024, 2025 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -24,12 +24,16 @@ import se.uu.ub.cora.gatekeeper.user.User;
 public interface DataGroupToUser {
 
 	/**
-	 * groupToUser Converts a {@link DataRecordGroup} to {@link User} object.
-	 * 
+	 * groupToUser Converts a {@link DataRecordGroup} to a {@link User} object.
+	 * <p>
+	 * This method takes a {@link DataRecordGroup} representing user data and converts it into a
+	 * {@link User} object. The conversion process includes setting the user's ID, active status,
+	 * app token IDs, login ID, first name, last name, roles, and password.
+	 * </p>
+	 *
 	 * @param userDataRecordGroup
-	 *            is the {@link DataRecordGroup} to convert to {@link User}
-	 * @return the represenetnation of userDataRecordGroup as {@link User}
+	 *            the {@link DataRecordGroup} to convert to a {@link User}
+	 * @return the representation of userDataRecordGroup as a {@link User}
 	 */
 	User groupToUser(DataRecordGroup userDataRecordGroup);
-
 }
